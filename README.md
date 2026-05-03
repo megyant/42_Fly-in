@@ -31,3 +31,4 @@ Pathfinding Algos:
 - https://www.geeksforgeeks.org/dsa/a-search-algorithm/
 - https://medium.com/@tahsinsoyakk/a-search-a-comprehensive-guide-8275ebdf8fae
 - https://www.geeksforgeeks.org/dsa/difference-between-dijkstras-algorithm-and-a-search-algorithm/
+https://www.redblobgames.com/pathfinding/a-star/introduction.html
