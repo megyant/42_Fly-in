@@ -13,14 +13,6 @@ connection: start-waypoint1
 connection: waypoint1-waypoint2
 connection: waypoint2-goal """
 
-""" from pydantic import BaseModel, Field, ValidationError """
-
-""" class File(BaseModel):
-    start_hub: str
-    hub: str
-    end_hub: str
-    connection: str """
-
 
 class MetaModel(BaseModel):
     zone: Optional[str] = "normal"
