@@ -16,7 +16,7 @@ install:
 	$(PIP) install flake8 mypy pydantic
 
 run:
-	$(PYTHON) -m $(MODULE)
+	$(PYTHON) -m $(MODULE) $(MAP)
 
 debug:
 	$(PYTHON) -m pdb $(MODULE)
