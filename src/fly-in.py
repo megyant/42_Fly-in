@@ -13,6 +13,7 @@ def main():
         file.parse_file(sys.argv[1])
         file.init_hubs()
         print(file.init_hubs())
+        print(file.init_connections())
     except (ValueError, FileNotFoundError, ValidationError) as e:
         print(f"Error: {e}")
         sys.exit(1)

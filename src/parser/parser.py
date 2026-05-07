@@ -14,7 +14,7 @@ connection: waypoint1-waypoint2
 connection: waypoint2-goal """
 
 
-class MetaModel(BaseModel):
+class MetaModelDrones(BaseModel):
     zone: Optional[str] = "normal"
     color: Optional[str] = None
     max_drones: Optional[int] = 1
@@ -25,10 +25,13 @@ class HubModel(BaseModel):
     x: int
     y: int
     metadata: Optional[List[str]] = None
-    processed_meta: Optional[MetaModel] = None
+    processed_meta: Optional[MetaModelDrones] = None
 
     @model_validator(mode='after')
-    def check_metadata(self) -> 'MetaModel':
+    def check_metadata_drones(self) -> 'HubModel':
+        if self.metadata is None:
+            self.processed_meta = HubModel()
+            return self
         data = {}
         for meta in self.metadata:
             clean = meta.strip('[]')
@@ -39,9 +42,45 @@ class HubModel(BaseModel):
             else:
                 raise ValidationError(f"Wrong data format in metadata: {meta}")
 
-        self.processed_meta = MetaModel(**data)
+        self.processed_meta = MetaModelDrones(**data)
 
         return self
+
+
+class MetaModelConnect(BaseModel):
+    max_link_capacity: Optional[int] = 1
+
+
+class ConnectionModel(BaseModel):
+    start: str
+    end: str
+    metadata: Optional[List[str]] = None
+    processed_meta: Optional[MetaModelConnect] = None
+
+    @model_validator(mode='after')
+    def check_metadata_connect(self) -> 'ConnectionModel':
+        try:
+            if self.metadata is None:
+                self.processed_meta = MetaModelConnect()
+                return self
+            data = {}
+            for meta in self.metadata:
+                clean = meta.strip('[]')
+
+                if '=' in clean:
+                    k, v = clean.split("=", 1)
+                    data[k] = v
+                else:
+                    raise ValidationError(f"Wrong data format in "
+                                          f"metadata: {meta}")
+
+            self.processed_meta = MetaModelConnect(**data)
+            if self.processed_meta is None:
+                raise ValidationError("Wrong metadata type")
+
+            return self
+        except ValidationError as e:
+            print(f"Error: {e}")
 
 
 class Parser:
@@ -185,5 +224,20 @@ class Parser:
                 ]
 
             return start, end, hubs
+
         except ValueError as e:
+            raise ValueError(f"Could not process data - {e}")
+
+    def init_connections(self) -> None:
+        try:
+            connections = [ConnectionModel(
+                            start=connection.get("connection").split('-')[0],
+                            end=connection.get("connection").split('-')[1],
+                            metadata=connection.get("metadata")
+                                        )
+                           for connection in self.connections
+                           ]
+
+            return connections
+        except (ValueError, ValidationError)as e:
             raise ValueError(f"Could not process data - {e}")
