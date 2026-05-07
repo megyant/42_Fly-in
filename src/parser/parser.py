@@ -271,7 +271,7 @@ class Parser:
 
     def init_hubs(self) -> None:
         """
-            Initialize and store the parsed dictionaries into a HubModel()
+            Initialize and store the parsed dictionaries into a HubModel().
         """
         try:
             # store start_hub into a HubModel()
@@ -309,7 +309,8 @@ class Parser:
 
     def init_connections(self) -> None:
         """
-            Initialize and store the parsed dictionaries into a ConnectionModel()
+            Initialize and store the parsed dictionaries into a
+            ConnectionModel().
         """
         try:
             # store each connection into a ConnectionModel()
