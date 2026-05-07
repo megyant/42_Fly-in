@@ -3,6 +3,8 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 from typing import Dict, List, Any, Optional
 from enum import Enum
 
+# Missing re-check parser constraints for limitations
+
 """ nb_drones: 2
 
 start_hub: start 0 0 [color=green]
@@ -40,6 +42,13 @@ class HubModel(BaseModel):
     processed_meta: Optional[MetaModelDrones] = None
 
     @model_validator(mode='after')
+    def vaidate_hub_name(self) -> 'HubModel':
+        if ' ' in self.name or '-' in self.name:
+            raise ValueError(f"Invalid hub name: '{self.name}'. "
+                             "Spaces and dashes are forbidden")
+        return self
+
+    @model_validator(mode='after')
     def check_metadata_drones(self) -> 'HubModel':
         """
         Validates if metadata is is apropriate format and
@@ -56,11 +65,11 @@ class HubModel(BaseModel):
                 if v.strip():
                     data[k] = v
             else:
-                raise ValidationError(f"Wrong data format in metadata: {meta}")
+                raise ValueError(f"Wrong data format in metadata: {meta}")
 
         try:
             self.processed_meta = MetaModelDrones(**data)
-        except ValidationError:
+        except (ValueError, ValidationError):
             print(f"\nError: {data}: {data[k]} in {self.metadata} could not be"
                   " processed.\nUsing default values defined.\n")
             self.processed_meta = MetaModelDrones()
@@ -99,11 +108,11 @@ class ConnectionModel(BaseModel):
                 if v.strip():
                     data[k] = v
             else:
-                raise ValidationError("Wrong data format in "
+                raise ValueError("Wrong data format in "
                                       f"metadata: {meta}")
         try:
             self.processed_meta = MetaModelConnect(**data)
-        except ValidationError:
+        except (ValueError, ValidationError):
             print(f"\nError: {data}: {data[k]} in {self.metadata} could not be"
                   "processed.\nUsing default value defined for "
                   "max_link_capacity.\n")
@@ -161,13 +170,15 @@ class Parser:
             if line.startswith('nb_drones'):
                 if self.nb_drones != 0:
                     raise ValueError("Duplicated 'number of drones' "
-                                     "variable")
+                                     "variable.")
                 try:
                     # split line at ':' and get 2nd argument turned into int
                     self.nb_drones = int(line.split(':')[1])
+                    if self.nb_drones < 0:
+                        raise ValueError("Number of drones must be positive")
                 except (ValueError, IndexError) as e:
                     raise ValueError("Could not compute 'number of drones' - "
-                                     f"{e}")
+                                     f"{e}.")
 
             # parse start_hub
             elif line.startswith('start_hub'):
@@ -175,7 +186,7 @@ class Parser:
                 # duplication
                 if self.start_hub != {}:
                     raise ValueError("Duplicated 'start_hub' "
-                                     "variable.")
+                                     "variable")
                 try:
                     # split line at ':' and get 2nd argument,
                     # then split on spaces
@@ -198,7 +209,7 @@ class Parser:
                 # same as start_hub
                 if self.end_hub != {}:
                     raise ValueError("Duplicated 'end_hub' "
-                                     "variable.")
+                                     "variable")
                 try:
                     info = line.split(':')[1]
                     parts = info.split()
@@ -303,7 +314,7 @@ class Parser:
 
             return start, end, hubs
 
-        except ValueError as e:
+        except (ValueError, ValidationError) as e:
             raise ValueError("Could not process data - "
                              f"{e.errors()[0].get('msg')}.")
 

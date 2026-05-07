@@ -3,6 +3,19 @@ from pydantic import ValidationError
 from src.parser.parser import Parser
 
 
+"""
+Missing:
+- Connections must link only previously defined zones using connection: <zone1>-<zone2>
+[metadata].
+- The same connection must not appear more than once (e.g., a-b and b-a are considered duplicates).
+- Capacity values (max_drones for zones, max_link_capacity for connections) must
+be positive integers.
+- Any metadata block (e.g., [zone=... color=...] for zones, [max_link_capacity=...]
+for connections) must be syntactically valid
+- Any other parsing error must stop the program and return a clear error message
+indicating the line and cause.
+"""
+
 def main():
     try:
         if len(sys.argv) > 1:
