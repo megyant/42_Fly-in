@@ -1,20 +1,18 @@
 import sys
 from pydantic import ValidationError
-from src.parser.parser import Parser
+from src.parser.validation_parse import ValidationParser
 
 
 """
 Missing:
-- Connections must link only previously defined zones using connection: <zone1>-<zone2>
-[metadata].
-- The same connection must not appear more than once (e.g., a-b and b-a are considered duplicates).
-- Capacity values (max_drones for zones, max_link_capacity for connections) must
-be positive integers.
-- Any metadata block (e.g., [zone=... color=...] for zones, [max_link_capacity=...]
-for connections) must be syntactically valid
-- Any other parsing error must stop the program and return a clear error message
-indicating the line and cause.
+- Capacity values (max_drones for zones, max_link_capacity for connections)
+must be positive integers.
+- Any metadata block (e.g., [zone=... color=...] for zones,
+[max_link_capacity=...] for connections) must be syntactically valid
+- Any other parsing error must stop the program and return a clear error
+message indicating the line and cause.
 """
+
 
 def main():
     try:
@@ -27,7 +25,7 @@ def main():
                 args = sys.argv[1]
         else:
             args = user_interaction()
-        file = Parser()
+        file = ValidationParser()
         file.parse_file(args)
         hubs_data = file.init_hubs()
         connections_data = file.init_connections()

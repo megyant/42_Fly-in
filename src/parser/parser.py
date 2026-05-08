@@ -1,9 +1,5 @@
 import os
-from pydantic import BaseModel, Field, ValidationError, model_validator
-from typing import Dict, List, Any, Optional
-from enum import Enum
-
-# Missing re-check parser constraints for limitations
+from typing import Dict, List, Any
 
 """ nb_drones: 2
 
@@ -15,109 +11,6 @@ end_hub: goal 3 0 [color=red]
 connection: start-waypoint1
 connection: waypoint1-waypoint2
 connection: waypoint2-goal """
-
-
-class Zone(str, Enum):
-    """ Lists all available options for [zone=]. """
-    normal = 'normal'
-    blocked = 'blocked'
-    restricted = 'restricted'
-    priority = 'priority'
-
-
-class MetaModelDrones(BaseModel):
-    """ Class that stores all metadata for hubs. """
-    model_config = {"extra": "forbid"}
-    zone: Optional[Zone] = Zone.normal
-    color: Optional[str] = None
-    max_drones: Optional[int] = 1
-
-
-class HubModel(BaseModel):
-    """ Class that stores all parameters from hubs. """
-    name: str
-    x: int
-    y: int
-    metadata: Optional[List[str]] = None
-    processed_meta: Optional[MetaModelDrones] = None
-
-    @model_validator(mode='after')
-    def vaidate_hub_name(self) -> 'HubModel':
-        if ' ' in self.name or '-' in self.name:
-            raise ValueError(f"Invalid hub name: '{self.name}'. "
-                             "Spaces and dashes are forbidden")
-        return self
-
-    @model_validator(mode='after')
-    def check_metadata_drones(self) -> 'HubModel':
-        """
-        Validates if metadata is is apropriate format and
-        stores it in its own Base Model - MetaModelDrones().
-        """
-        if self.metadata is None:
-            self.processed_meta = MetaModelDrones()
-            return self
-        data = {}
-        for meta in self.metadata:
-            clean = meta.strip('[]')
-            if '=' in clean:
-                k, v = clean.split("=", 1)
-                if v.strip():
-                    data[k] = v
-            else:
-                raise ValueError(f"Wrong data format in metadata: {meta}")
-
-        try:
-            self.processed_meta = MetaModelDrones(**data)
-        except (ValueError, ValidationError):
-            print(f"\nError: {data}: {data[k]} in {self.metadata} could not be"
-                  " processed.\nUsing default values defined.\n")
-            self.processed_meta = MetaModelDrones()
-
-        return self
-
-
-class MetaModelConnect(BaseModel):
-    """ Class that stores all metadata for connections. """
-    model_config = {"extra": "forbid"}
-    max_link_capacity: Optional[int] = 1
-
-
-class ConnectionModel(BaseModel):
-    """ Class that stores all parameters from connections. """
-    start: str
-    end: str
-    metadata: Optional[List[str]] = None
-    processed_meta: Optional[MetaModelConnect] = None
-
-    @model_validator(mode='after')
-    def check_metadata_connect(self) -> 'ConnectionModel':
-        """
-        Validates if metadata is is apropriate format and
-        stores it in its own Base Model - MetaModelConnect().
-        """
-        if self.metadata is None:
-            self.processed_meta = MetaModelConnect()
-            return self
-        data = {}
-        for meta in self.metadata:
-            clean = meta.strip('[]')
-
-            if '=' in clean:
-                k, v = clean.split("=", 1)
-                if v.strip():
-                    data[k] = v
-            else:
-                raise ValueError("Wrong data format in "
-                                      f"metadata: {meta}")
-        try:
-            self.processed_meta = MetaModelConnect(**data)
-        except (ValueError, ValidationError):
-            print(f"\nError: {data}: {data[k]} in {self.metadata} could not be"
-                  "processed.\nUsing default value defined for "
-                  "max_link_capacity.\n")
-            self.processed_meta = MetaModelConnect()
-        return self
 
 
 class Parser:
@@ -137,6 +30,9 @@ class Parser:
         self.hubs: List[Dict[str, Any]] = []
         self.end_hub: Dict[str, Any] = {}
         self.connections: List[Dict[str, Any]] = []
+        self.line_number: int = 0
+        self.connections = []
+        self.seen_connections = set()
 
     def parse_file(self, filepath: str) -> None:
         """
@@ -160,7 +56,7 @@ class Parser:
         except IOError:
             print("Error: Could not read file.")
 
-        for line in lines:
+        for self.line_number, line in enumerate(lines, start=1):
             # clean lines from leading and trailing spaces and ignore comments
             line = line.strip()
             if not line or line.startswith('#'):
@@ -170,7 +66,8 @@ class Parser:
             if line.startswith('nb_drones'):
                 if self.nb_drones != 0:
                     raise ValueError("Duplicated 'number of drones' "
-                                     "variable.")
+                                     "variable.\n"
+                                     f"Line: {self.line_number}")
                 try:
                     # split line at ':' and get 2nd argument turned into int
                     self.nb_drones = int(line.split(':')[1])
@@ -186,7 +83,8 @@ class Parser:
                 # duplication
                 if self.start_hub != {}:
                     raise ValueError("Duplicated 'start_hub' "
-                                     "variable")
+                                     "variable\n"
+                                     f"Line: {self.line_number}")
                 try:
                     # split line at ':' and get 2nd argument,
                     # then split on spaces
@@ -198,18 +96,20 @@ class Parser:
                         "name": parts[0],
                         "x": int(parts[1]),
                         "y": int(parts[2]),
-                        "metadata": parts[3:] if len(parts) > 3 else None
+                        "metadata": parts[3:] if len(parts) > 3 else None,
+                        "line": self.line_number
                     }
                 except (ValueError, IndexError) as e:
                     raise ValueError("Could not compute 'start_hub' - "
-                                     f"{e}.")
+                                     f"{e}.\n")
 
             # parse end_hub
             elif line.startswith('end_hub'):
                 # same as start_hub
                 if self.end_hub != {}:
                     raise ValueError("Duplicated 'end_hub' "
-                                     "variable")
+                                     "variable"
+                                     f"Line: {self.line_number}")
                 try:
                     info = line.split(':')[1]
                     parts = info.split()
@@ -218,7 +118,8 @@ class Parser:
                         "name": parts[0],
                         "x": int(parts[1]),
                         "y": int(parts[2]),
-                        "metadata": parts[3:] if len(parts) > 3 else None
+                        "metadata": parts[3:] if len(parts) > 3 else None,
+                        "line": self.line_number
                     }
                 except (ValueError, IndexError) as e:
                     raise ValueError("Could not compute 'end_hub' - "
@@ -236,13 +137,15 @@ class Parser:
                     # check if there is already a hub with the same name
                     if any(h['name'] == name for h in self.hubs):
                         raise ValueError("Duplicate hub: "
-                                         f"{name}.")
+                                         f"{name}."
+                                         f"Line: {self.line_number}")
 
                     hub = {
                         "name": parts[0],
                         "x": int(parts[1]),
                         "y": int(parts[2]),
-                        "metadata": parts[3:] if len(parts) > 3 else None
+                        "metadata": parts[3:] if len(parts) > 3 else None,
+                        "line": self.line_number
                     }
                     self.hubs.append(hub)
                 except (ValueError, IndexError) as e:
@@ -259,12 +162,41 @@ class Parser:
                         continue
 
                     connect = parts[0]
-                    # check if there is already a conection with the path
-                    exists = any(c['connection'] == connect for c
-                                 in self.connections)
-                    if exists:
-                        raise ValueError("Duplicate connection: "
-                                         f"{connect}.")
+                    if connect.count("-") != 1:
+                        raise ValueError("Connection not in waypoint-waypoint "
+                                         "format\n"
+                                         f"Line: {self.line_number}")
+
+                    nodes = connect.split('-')
+
+                    # Connections must link only previously defined zones
+                    all_names = set()
+                    if self.start_hub:
+                        all_names.add(self.start_hub['name'])
+                    if self.end_hub:
+                        all_names.add(self.end_hub['name'])
+                    for hub in self.hubs:
+                        all_names.add(hub['name'])
+
+                    for node in nodes:
+                        if node not in all_names:
+                            raise ValueError("Connections must link only "
+                                             "previously defined zones\n"
+                                             f"Line: {self.line_number}")
+
+                    # Self-connections and duplicate connections not allowed
+                    if nodes[0] == nodes[1]:
+                        raise ValueError("Self-connection not allowed\n"
+                                         f"Line: {self.line_number}")
+                    sorted_nodes = sorted(nodes)
+                    normalized = "-".join(sorted_nodes)
+
+                    if (hasattr(self, 'seen_connections') and normalized in
+                            self.seen_connections):
+                        raise ValueError(f"Duplicate connection {nodes}\n"
+                                         f"Line: {self.line_number}")
+
+                    self.seen_connections.add(normalized)
 
                     metadata = parts[1:] if len(parts) > 1 else None
 
@@ -278,61 +210,5 @@ class Parser:
                     raise ValueError("Could not compute 'connection' - "
                                      f"{e}.")
             else:
-                raise ValueError("Found no corresponding parameter.")
-
-    def init_hubs(self) -> None:
-        """
-            Initialize and store the parsed dictionaries into a HubModel().
-        """
-        try:
-            # store start_hub into a HubModel()
-            start = HubModel(
-                    name=self.start_hub.get("name"),
-                    x=self.start_hub.get("x", 0),
-                    y=self.start_hub.get("y", 0),
-                    metadata=self.start_hub.get("metadata")
-                    )
-
-            # store end_hub into a HubModel
-            end = HubModel(
-                    name=self.end_hub.get("name"),
-                    x=self.end_hub.get("x", 0),
-                    y=self.end_hub.get("y", 0),
-                    metadata=self.end_hub.get("metadata")
-                    )
-
-            # store each hub into a HubModel
-            hubs = [
-                    HubModel(
-                        name=hub.get("name"),
-                        x=hub.get("x", 0),
-                        y=hub.get("y", 0),
-                        metadata=hub.get("metadata")
-                        )
-                    for hub in self.hubs
-                ]
-
-            return start, end, hubs
-
-        except (ValueError, ValidationError) as e:
-            raise ValueError("Could not process data - "
-                             f"{e.errors()[0].get('msg')}.")
-
-    def init_connections(self) -> None:
-        """
-            Initialize and store the parsed dictionaries into a
-            ConnectionModel().
-        """
-        try:
-            # store each connection into a ConnectionModel()
-            connections = [ConnectionModel(
-                            start=connection.get("connection").split('-')[0],
-                            end=connection.get("connection").split('-')[1],
-                            metadata=connection.get("metadata")
-                                        )
-                           for connection in self.connections
-                           ]
-
-            return connections
-        except (ValueError, ValidationError)as e:
-            raise ValueError(f"Could not process data - {e}.")
+                raise ValueError("Found no corresponding parameter.\n"
+                                 f"Line: {self.line_number}")
