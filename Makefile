@@ -20,9 +20,6 @@ run:
 	@MAP_PATH=$$(./map_selection.sh); \
 	if [ $$? -eq 0 ]; then \
 		$(PYTHON) -m $(MODULE) $$MAP_PATH; \
-	else \
-		echo "Error: Map selection failed. " >&2 \
-		exit 1; \
 	fi
 	
 
