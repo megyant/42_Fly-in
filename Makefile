@@ -3,6 +3,7 @@ PYTHON  = $(VENV)/bin/python3
 PIP     = $(VENV)/bin/pip
 SRC 	= src
 MODULE	= src.fly-in
+MAP_PATH = maps/
 
 .PHONY: install run debug clean fclean lint flake8 mypy lint-strict mypy-strict
 
@@ -16,7 +17,14 @@ install:
 	$(PIP) install flake8 mypy pydantic
 
 run:
-	$(PYTHON) -m $(MODULE) $(MAP)
+	@MAP_PATH=$$(./maps/map_selection.sh); \
+	if [ $$? -eq 0 ]; then \
+		$(PYTHON) -m $(MODULE) $$MAP_PATH; \
+	else \
+		echo "Error: Map selection failed. " >&2 \
+		exit 1; \
+	fi
+	
 
 debug:
 	$(PYTHON) -m pdb $(MODULE)

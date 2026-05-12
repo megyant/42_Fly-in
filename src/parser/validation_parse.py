@@ -23,8 +23,8 @@ class MetaModelDrones(BaseModel):
 class HubModel(BaseModel):
     """ Class that stores all parameters from hubs. """
     name: str
-    x: int = Field(ge=0)  # Missing field
-    y: int = Field(ge=0)  # Missing field
+    x: int = Field(ge=-100)  # Missing field
+    y: int = Field(ge=-100)  # Missing field
     metadata: Optional[List[str]] = None
     processed_meta: Optional[MetaModelDrones] = None
 

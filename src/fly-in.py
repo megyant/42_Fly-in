@@ -4,27 +4,21 @@ from src.parser.validation_parse import ValidationParser
 
 
 """
-Missing:
-- Capacity values (max_drones for zones, max_link_capacity for connections)
-must be positive integers.
-- Any metadata block (e.g., [zone=... color=...] for zones,
-[max_link_capacity=...] for connections) must be syntactically valid
-- Any other parsing error must stop the program and return a clear error
-message indicating the line and cause.
+Next:
+
+- Start working on the graphs
+- Start working on the algorithm
 """
 
 
 def main():
     try:
-        if len(sys.argv) > 1:
-            if len(sys.argv) != 2:
-                print("Error: Enter filepath.\n"
-                      "Usage: python3 -m src.fly-in filepath/file.txt")
-                sys.exit(1)
-            else:
-                args = sys.argv[1]
-        else:
-            args = user_interaction()
+        if len(sys.argv) != 2:
+            print("Error: Enter filepath.\n"
+                  "Usage: python3 -m src.fly-in filepath/file.txt")
+            sys.exit(1)
+
+        args = sys.argv[1]
         file = ValidationParser()
         file.parse_file(args)
         hubs_data = file.init_hubs()
@@ -36,11 +30,6 @@ def main():
     except (ValueError, FileNotFoundError, ValidationError) as e:
         print(f"Error: {e}")
         sys.exit(1)
-
-
-def user_interaction():  # TODO
-    file = input("enter file: ")
-    return file
 
 
 if __name__ == "__main__":
