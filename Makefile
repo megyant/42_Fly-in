@@ -17,7 +17,7 @@ install:
 	$(PIP) install flake8 mypy pydantic
 
 run:
-	@MAP_PATH=$$(./maps/map_selection.sh); \
+	@MAP_PATH=$$(./map_selection.sh); \
 	if [ $$? -eq 0 ]; then \
 		$(PYTHON) -m $(MODULE) $$MAP_PATH; \
 	else \
