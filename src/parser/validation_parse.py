@@ -1,6 +1,6 @@
 from src.parser.parser import Parser
 from pydantic import BaseModel, Field, ValidationError, model_validator
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from enum import Enum
 
 
@@ -196,3 +196,26 @@ class ValidationParser(Parser):
         except (ValueError, ValidationError)as e:
             raise ValueError(f"Could not process data - {e}.\n"
                              f"Line: {self.line_number}")
+
+    def create_dicts(self, connections: ConnectionModel, start_hub: HubModel,
+                     end_hub: HubModel,
+                     hubs: List[HubModel]) -> Tuple[List[dict], dict, dict,
+                                                    List[dict]]:
+
+        hub = []
+        for single_hub in hubs:
+            hub.append(single_hub.model_dump(exclude={'metadata'}))
+        print(f"hub: {hub}")
+
+        start = start_hub.model_dump(exclude={'metadata'})
+        print(f"start: {start}")
+
+        end = end_hub.model_dump(exclude={'metadata'})
+        print(f"end: {end}")
+
+        connect = []
+        for connection in connections:
+            connect.append(connection.model_dump(exclude={'metadata'}))
+        print(f"connect: {connect}")
+
+        return hub, start, end, connect

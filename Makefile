@@ -14,7 +14,7 @@ all_clean: install run clean
 install:
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
-	$(PIP) install flake8 mypy pydantic
+	$(PIP) install flake8 mypy pydantic pygame
 
 run:
 	@MAP_PATH=$$(./map_selection.sh); \
