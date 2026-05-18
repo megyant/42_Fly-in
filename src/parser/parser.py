@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Dict, List, Any
 
 """ nb_drones: 2
@@ -91,12 +92,16 @@ class Parser:
                     info = line.split(':')[1]
                     parts = info.split()
 
+                    meta_match = re.search(r'\[([^\]]*)\]', line)
+                    metadata = (meta_match.group(1).split()
+                                if meta_match else None)
+
                     # save the final dictionary
                     self.start_hub = {
                         "name": parts[0],
                         "x": int(parts[1]),
                         "y": int(parts[2]),
-                        "metadata": parts[3:] if len(parts) > 3 else None,
+                        "metadata": metadata,
                         "line": self.line_number
                     }
                 except (ValueError, IndexError) as e:
@@ -114,11 +119,15 @@ class Parser:
                     info = line.split(':')[1]
                     parts = info.split()
 
+                    meta_match = re.search(r'\[([^\]]*)\]', line)
+                    metadata = (meta_match.group(1).split()
+                                if meta_match else None)
+
                     self.end_hub = {
                         "name": parts[0],
                         "x": int(parts[1]),
                         "y": int(parts[2]),
-                        "metadata": parts[3:] if len(parts) > 3 else None,
+                        "metadata": metadata,
                         "line": self.line_number
                     }
                 except (ValueError, IndexError) as e:
@@ -140,11 +149,15 @@ class Parser:
                                          f"{name}."
                                          f"Line: {self.line_number}")
 
+                    meta_match = re.search(r'\[([^\]]*)\]', line)
+                    metadata = (meta_match.group(1).split()
+                                if meta_match else None)
+
                     hub = {
                         "name": parts[0],
                         "x": int(parts[1]),
                         "y": int(parts[2]),
-                        "metadata": parts[3:] if len(parts) > 3 else None,
+                        "metadata": metadata,
                         "line": self.line_number
                     }
                     self.hubs.append(hub)

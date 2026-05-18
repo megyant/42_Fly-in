@@ -154,19 +154,19 @@ class ValidationParser(Parser):
 
             # store each hub into a HubModel
             hubs = []
-            for single_hub in self.hubs:
-                current_line = single_hub.get("line")
-            hubs = [
-                    HubModel(
+            for hub in self.hubs:
+                current_line = hub.get("line")
+                hubs.append(HubModel(
                         name=hub.get("name"),
                         x=hub.get("x", 0),
                         y=hub.get("y", 0),
                         metadata=hub.get("metadata")
-                        )
-                    for hub in self.hubs
-                ]
+                        ))
 
-            return start, end, hubs
+            all_hubs = {start.name: start, end.name: end}
+            all_hubs.update({hub.name: hub for hub in hubs})
+
+            return all_hubs, start.name, end.name
 
         except ValidationError as e:
             raise ValueError("Could not process data - "
@@ -192,7 +192,9 @@ class ValidationParser(Parser):
                            for connection in self.connections
                            ]
 
-            return connections
+            connect_dict = {f"{c.start}-{c.end}": c for c in connections}
+
+            return connect_dict
         except (ValueError, ValidationError)as e:
             raise ValueError(f"Could not process data - {e}.\n"
                              f"Line: {self.line_number}")
