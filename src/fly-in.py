@@ -1,7 +1,7 @@
 import sys
 from pydantic import ValidationError
 from src.parser.validation_parse import ValidationParser
-
+from src.render.render import Render
 
 """
 Next:
@@ -21,12 +21,18 @@ def main():
         args = sys.argv[1]
         file = ValidationParser()
         file.parse_file(args)
-        hubs_data = file.init_hubs()
+        start, end, hubs = file.init_hubs()
         connections_data = file.init_connections()
-        print()
-        print(hubs_data)
+        game_data = file.create_dicts(start_hub=start, end_hub=end, hubs=hubs,
+                                      connections=connections_data)
+        """print()
+        print(start, end, hubs)
         print()
         print(connections_data)
+        print() """
+        print(game_data)
+        render = Render()
+        render.render()
     except (ValueError, FileNotFoundError, ValidationError) as e:
         print(f"Error: {e}")
         sys.exit(1)
