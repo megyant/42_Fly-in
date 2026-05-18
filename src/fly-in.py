@@ -21,15 +21,21 @@ def main():
         args = sys.argv[1]
         file = ValidationParser()
         file.parse_file(args)
-        start, end, hubs = file.init_hubs()
-        connections_data = file.init_connections()
-        game_data = file.create_dicts(start_hub=start, end_hub=end, hubs=hubs,
-                                      connections=connections_data)
-        """print()
-        print(start, end, hubs)
+        all_hubs, start_name, end_name = file.init_hubs()
+        start_hub = all_hubs[start_name]
+        end_hub = all_hubs[end_name]
+        hubs = [hub for name, hub in all_hubs.items() if name != start_name
+                and name != end_name]
+        connections = file.init_connections()
+        game_data = file.create_dicts(hubs=hubs,
+                                      start_hub=start_hub,
+                                      end_hub=end_hub,
+                                      connections=list(connections.values()))
         print()
-        print(connections_data)
-        print() """
+        print(start_hub, end_hub, hubs)
+        print()
+        print(connections)
+        print()
         print(game_data)
         render = Render()
         render.render()

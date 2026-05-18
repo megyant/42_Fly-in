@@ -1,6 +1,6 @@
 from src.parser.parser import Parser
 from pydantic import BaseModel, Field, ValidationError, model_validator
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 from enum import Enum
 
 
@@ -76,6 +76,7 @@ class ConnectionModel(BaseModel):
     end: str
     metadata: Optional[List[str]] = None
     processed_meta: Optional[MetaModelConnect] = None
+    neighbours: dict[str, list[str]] = Field(default=[])  # TODO
 
     @model_validator(mode='after')
     def check_metadata_connect(self) -> 'ConnectionModel':
@@ -177,7 +178,7 @@ class ValidationParser(Parser):
                              f"{str(e)}.\n"
                              f"Line: {current_line}")
 
-    def init_connections(self) -> None:
+    def init_connections(self) -> Dict[str, ConnectionModel]:
         """
             Initialize and store the parsed dictionaries into a
             ConnectionModel().
@@ -192,7 +193,8 @@ class ValidationParser(Parser):
                            for connection in self.connections
                            ]
 
-            connect_dict = {f"{c.start}-{c.end}": c for c in connections}
+            connect_dict: Dict[str, ConnectionModel] = {f"{c.start}-{c.end}":
+                                                        c for c in connections}
 
             return connect_dict
         except (ValueError, ValidationError)as e:
