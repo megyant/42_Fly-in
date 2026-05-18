@@ -1,6 +1,6 @@
 from src.parser.parser import Parser
 from pydantic import BaseModel, Field, ValidationError, model_validator
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Dict
 from enum import Enum
 
 
@@ -76,7 +76,6 @@ class ConnectionModel(BaseModel):
     end: str
     metadata: Optional[List[str]] = None
     processed_meta: Optional[MetaModelConnect] = None
-    neighbours: dict[str, list[str]] = Field(default=[])  # TODO
 
     @model_validator(mode='after')
     def check_metadata_connect(self) -> 'ConnectionModel':
@@ -201,25 +200,15 @@ class ValidationParser(Parser):
             raise ValueError(f"Could not process data - {e}.\n"
                              f"Line: {self.line_number}")
 
-    def create_dicts(self, connections: ConnectionModel, start_hub: HubModel,
-                     end_hub: HubModel,
-                     hubs: List[HubModel]) -> Tuple[List[dict], dict, dict,
-                                                    List[dict]]:
+    def build_neighbours(self, conn: dict[str, ConnectionModel]) -> dict[str,
+                                                                   list[str]]:
+        neighbours = {}
 
-        hub = []
-        for single_hub in hubs:
-            hub.append(single_hub.model_dump(exclude={'metadata'}))
-        print(f"hub: {hub}")
+        for connection in conn.values():
+            neighbours.setdefault(conn.start, []).append(conn.end)
+            neighbours.setdefault(conn.end, []).append(conn.start)
 
-        start = start_hub.model_dump(exclude={'metadata'})
-        print(f"start: {start}")
+        return neighbours
 
-        end = end_hub.model_dump(exclude={'metadata'})
-        print(f"end: {end}")
 
-        connect = []
-        for connection in connections:
-            connect.append(connection.model_dump(exclude={'metadata'}))
-        print(f"connect: {connect}")
-
-        return hub, start, end, connect
+# I was fixing some bugs and making build neighbours work fully

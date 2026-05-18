@@ -1,7 +1,8 @@
 import sys
 from pydantic import ValidationError
 from src.parser.validation_parse import ValidationParser
-from src.render.render import Render
+from src.render.render_arguments import WorldState
+# from src.render.render import Render
 
 """
 Next:
@@ -22,23 +23,19 @@ def main():
         file = ValidationParser()
         file.parse_file(args)
         all_hubs, start_name, end_name = file.init_hubs()
-        start_hub = all_hubs[start_name]
-        end_hub = all_hubs[end_name]
-        hubs = [hub for name, hub in all_hubs.items() if name != start_name
-                and name != end_name]
         connections = file.init_connections()
-        game_data = file.create_dicts(hubs=hubs,
-                                      start_hub=start_hub,
-                                      end_hub=end_hub,
-                                      connections=list(connections.values()))
-        print()
-        print(start_hub, end_hub, hubs)
-        print()
-        print(connections)
-        print()
-        print(game_data)
-        render = Render()
-        render.render()
+        neighbours = file.build_neighbours(connections)
+
+        world = WorldState(
+            nb_drones=file.nb_drones,
+            hubs=all_hubs,
+            connections=connections,
+            neighbours=neighbours,
+            start=start_name,
+            end=end_name
+        )
+        print(world)
+
     except (ValueError, FileNotFoundError, ValidationError) as e:
         print(f"Error: {e}")
         sys.exit(1)
