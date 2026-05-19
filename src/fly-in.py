@@ -1,7 +1,7 @@
 import sys
 from pydantic import ValidationError
 from src.parser.validation_parse import ValidationParser
-from src.render.render_arguments import WorldState
+from src.render.render_arguments import WorldState, SimulationStatus
 # from src.render.render import Render
 
 """
@@ -34,7 +34,9 @@ def main():
             start=start_name,
             end=end_name
         )
+        simulation = SimulationStatus(world)
         print(world)
+        print(f"\n{simulation.state}\n")
 
     except (ValueError, FileNotFoundError, ValidationError) as e:
         print(f"Error: {e}")

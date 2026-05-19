@@ -10,7 +10,6 @@ class WorldState:
     neighbours: dict[str, list[str]]
     start: str
     end: str
-    turn: int
 
 
 @dataclass
@@ -31,6 +30,6 @@ class SimulationStatus:
                              for i in range(world.nb_drones)},
             hub_occupancy={name: (world.nb_drones if name == world.start
                                   else 0) for name in world.hubs},
-            connection_occupancy={key: 0 for key in world.hubs},
+            connection_occupancy={key: 0 for key in world.connections},
             in_transit={}
         )

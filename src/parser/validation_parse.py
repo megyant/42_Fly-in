@@ -200,15 +200,13 @@ class ValidationParser(Parser):
             raise ValueError(f"Could not process data - {e}.\n"
                              f"Line: {self.line_number}")
 
-    def build_neighbours(self, conn: dict[str, ConnectionModel]) -> dict[str,
+    def build_neighbours(self,
+                         conn: dict[str, ConnectionModel]) -> dict[str,
                                                                    list[str]]:
         neighbours = {}
 
-        for connection in conn.values():
+        for conn in conn.values():
             neighbours.setdefault(conn.start, []).append(conn.end)
             neighbours.setdefault(conn.end, []).append(conn.start)
 
         return neighbours
-
-
-# I was fixing some bugs and making build neighbours work fully
