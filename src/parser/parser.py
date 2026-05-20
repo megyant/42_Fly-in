@@ -15,7 +15,7 @@ connection: waypoint2-goal """
 
 
 class Parser:
-    def __init__(self) -> None:
+    def __init__(self, plant: str) -> None:
         """
         Initialize the Parser class.
 
