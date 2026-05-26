@@ -1,16 +1,50 @@
 import pygame
-from src.render.simulation import WorldState, SimulationState
+from src.models import WorldState, SimulationState
 import sys
 
 
 class Render:
     def __init__(self, world: WorldState):
         pygame.init()
-        self.screen = pygame.display.set_mode((1920, 1080))
+        self.screen_width = 1920
+        self.screen_height = 1080
+        self.screen = pygame.display.set_mode((self.screen_width,
+                                               self.screen_height),
+                                              pygame.FULLSCREEN)
         pygame.display.set_caption("mbotelho's Fly-in")
         self.clock = pygame.time.Clock()
         self.positions: dict[str, tuple[int, int]] = {}
         self.world = world
+
+        self.color_map = {
+                    'black': (0, 0, 0),
+                    'white': (255, 255, 255),
+                    'red': (255, 0, 0),
+                    'green': (0, 128, 0),
+                    'blue': (0, 0, 255),
+                    'yellow': (255, 255, 0),
+                    'maroon': (128, 0, 0),
+                    'orange': (255, 165, 0),
+                    'purple': (128, 0, 128),
+                    'gray': (128, 128, 128),
+                    'cyan': (0, 255, 255),
+                    'brown': (165, 42, 42),
+                    'lime': (0, 255, 0),
+                    'magenta': (255, 0, 255),
+                    'gold': (255, 215, 0),
+                    'darkred': (139, 0, 0),
+                    'crimson': (220, 20, 60),
+                    'violet': (238, 130, 238)
+                    }
+
+        self.rainbow_colors = [
+                            'red',
+                            'orange',
+                            'yellow',
+                            'lime',
+                            'blue',
+                            'purple'
+                        ]
 
     def compute_layout(self) -> dict[str, tuple[int, int]]:
         hubs = self.world.hubs.values()
@@ -29,28 +63,36 @@ class Render:
 
         scale = min(usable_w / range_x, usable_h / range_y)
 
+        actual_w = range_x * scale
+        actual_h = range_y * scale
+
+        offset_x = (self.screen.get_width() - actual_w) / 2
+        offset_y = (self.screen.get_height() - actual_h) / 2
+
         positions = {}
         for name, hub in self.world.hubs.items():
-            sx = padding + (hub.x - min_x) * scale
-            sy = padding + (max_y - hub.y) * scale
-            positions[name] = (int(sx), int(sy))
+            sx = offset_x + (hub.x - min_x) * scale
+            sy = offset_y + (max_y - hub.y) * scale
+            positions[name] = (sx, sy)
 
-        node_radius = max(10, int(scale * 0.3))
+        max_radius = int(scale * 0.12)
+        node_radius = max(10, min(max_radius, int(scale * 0.5)))
 
         return positions, scale, node_radius
 
-    def load_world(self,) -> None:
-        self.positions, self.scale, self.node_radius = self.compute_layout(
-            self.world)
+    def load_world(self) -> None:
+        self.positions, self.scale, self.node_radius = self.compute_layout()
 
     def draw(self, simulation: SimulationState):
+        self._handle_events()
+
         self.simulation = simulation
 
-        self.screen.fill((0, 0, 0))
-        self._draw_connections(self.world)
-        self._draw_hubs(self.world, self.simulation)
-        self._draw_labels(self.world)
-        self._draw_drones(self.world, self.simulation)
+        self.screen.fill((255, 255, 255))
+        self._draw_connections()
+        self._draw_hubs()
+        self._draw_labels()
+        self._draw_drones()
         pygame.display.update()
         self.clock.tick(60)
 
@@ -60,11 +102,40 @@ class Render:
                 pygame.quit()
                 sys.exit()
 
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+
+                if event.key == pygame.K_c and (event.mod & pygame.KMOD_CTRL):
+                    pygame.quit()
+                    sys.exit()
+
     def _draw_connections(self) -> None:
-        pass
+        for connection in self.world.connections.values():
+            pygame.draw.aaline(surface=self.screen,
+                               color=(0, 0, 0),
+                               start_pos=self.positions[connection.start],
+                               end_pos=self.positions[connection.end])
 
     def _draw_hubs(self) -> None:
-        pass
+        for hub in self.world.hubs.values():
+            if hub.processed_meta.color != 'rainbow':
+                color_pick = self.color_map.get(hub.processed_meta.color)
+                pygame.draw.circle(surface=self.screen,
+                                   color=color_pick,
+                                   center=self.positions[hub.name],
+                                   radius=self.node_radius)
+            else:
+                total_rings = len(self.rainbow_colors)
+                for i, color in enumerate(self.rainbow_colors):
+                    ring_factor = (total_rings - i) / total_rings
+                    new_radius = self.node_radius * ring_factor
+                    color_pick = self.color_map.get(color)
+                    pygame.draw.circle(surface=self.screen,
+                                       color=color_pick,
+                                       center=self.positions[hub.name],
+                                       radius=max(1, int(new_radius)))
 
     def _draw_labels(self) -> None:
         pass

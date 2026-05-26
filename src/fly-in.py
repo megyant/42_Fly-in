@@ -1,6 +1,5 @@
 import sys
 from pydantic import ValidationError
-from src.parser.validation_parse import ValidationParser
 from src.manager import Manager
 
 """
@@ -22,10 +21,14 @@ def main():
 
         manager = Manager(args)
 
-        manager.initialize_classes()
+        manager.start_simulation()
 
     except (ValueError, FileNotFoundError, ValidationError) as e:
         print(f"Error: {e}")
+        sys.exit(1)
+
+    except KeyboardInterrupt:
+        print("You exited the program")
         sys.exit(1)
 
 

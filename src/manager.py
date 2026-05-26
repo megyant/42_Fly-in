@@ -1,5 +1,6 @@
 from src.parser.validation_parse import ValidationParser
-from src.render.simulation import WorldState, SimulationStatus
+from src.models import WorldState
+from src.render.simulation import SimulationStatus
 from src.render.render import Render
 
 

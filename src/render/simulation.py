@@ -1,4 +1,5 @@
 from src.render.render import Render
+from src.models import WorldState, SimulationState
 
 
 class SimulationStatus:
@@ -18,7 +19,7 @@ class SimulationStatus:
     def run(self) -> None:
         while not self.finished():
             self.step()
-            self.renderer.draw(self.world, self.state)
+            self.renderer.draw(self.state)
 
     def finished(self) -> bool:
         pass
