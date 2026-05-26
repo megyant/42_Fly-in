@@ -1,5 +1,6 @@
 import pygame
-from src.render.render_arguments import WorldState, SimulationState
+from src.render.simulation import WorldState, SimulationState
+import sys
 
 
 class Render:
@@ -34,30 +35,39 @@ class Render:
             sy = padding + (max_y - hub.y) * scale
             positions[name] = (int(sx), int(sy))
 
-        return positions, scale
+        node_radius = max(10, int(scale * 0.3))
 
-    def load_world(self, world: WorldState) -> None:
-        self.positions, self.scale = self.compute_layout(world)
+        return positions, scale, node_radius
 
-    def draw(self, world: WorldState, simulation: SimulationState):
+    def load_world(self,) -> None:
+        self.positions, self.scale, self.node_radius = self.compute_layout(
+            self.world)
+
+    def draw(self, simulation: SimulationState):
+        self.simulation = simulation
+
         self.screen.fill((0, 0, 0))
-        self._draw_connections(world)
-        self._draw_hubs(world, simulation)
-        self._draw_labels(world)
-        self._draw_drones(world, simulation)
+        self._draw_connections(self.world)
+        self._draw_hubs(self.world, self.simulation)
+        self._draw_labels(self.world)
+        self._draw_drones(self.world, self.simulation)
         pygame.display.update()
         self.clock.tick(60)
 
-    def _draw_connections(self, world: WorldState) -> None:
+    def _handle_events(self) -> None:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+    def _draw_connections(self) -> None:
         pass
 
-    def _draw_hubs(self, world: WorldState,
-                   simulation: SimulationState) -> None:
+    def _draw_hubs(self) -> None:
         pass
 
-    def _draw_labels(self, world: WorldState) -> None:
+    def _draw_labels(self) -> None:
         pass
 
-    def _draw_drones(self, world: WorldState,
-                     simulation: SimulationState) -> None:
+    def _draw_drones(self) -> None:
         pass

@@ -1,8 +1,7 @@
 import sys
 from pydantic import ValidationError
 from src.parser.validation_parse import ValidationParser
-from src.render.render_arguments import WorldState, SimulationStatus
-# from src.render.render import Render
+from src.manager import Manager
 
 """
 Next:
@@ -20,23 +19,10 @@ def main():
             sys.exit(1)
 
         args = sys.argv[1]
-        file = ValidationParser()
-        file.parse_file(args)
-        all_hubs, start_name, end_name = file.init_hubs()
-        connections = file.init_connections()
-        neighbours = file.build_neighbours(connections)
 
-        world = WorldState(
-            nb_drones=file.nb_drones,
-            hubs=all_hubs,
-            connections=connections,
-            neighbours=neighbours,
-            start=start_name,
-            end=end_name
-        )
-        simulation = SimulationStatus(world)
-        print(world)
-        print(f"\n{simulation.state}\n")
+        manager = Manager(args)
+
+        manager.initialize_classes()
 
     except (ValueError, FileNotFoundError, ValidationError) as e:
         print(f"Error: {e}")
