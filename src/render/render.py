@@ -61,27 +61,29 @@ class Render:
         range_x = max(max_x - min_x, 1)
         range_y = max(max_y - min_y, 1)
 
-        scale = min(usable_w / range_x, usable_h / range_y)
+        scale_x = min(usable_w / range_x, 150)
+        scale_y = min(usable_h / range_y, 150)
 
-        actual_w = range_x * scale
-        actual_h = range_y * scale
+        actual_w = range_x * scale_x
+        actual_h = range_y * scale_y
 
-        offset_x = (self.screen.get_width() - actual_w) / 2
-        offset_y = (self.screen.get_height() - actual_h) / 2
+        offset_x = (self.screen_width - actual_w) / 2
+        offset_y = (self.screen_height - actual_h) / 2
 
         positions = {}
         for name, hub in self.world.hubs.items():
-            sx = offset_x + (hub.x - min_x) * scale
-            sy = offset_y + (max_y - hub.y) * scale
+            sx = offset_x + (hub.x - min_x) * scale_x
+            sy = offset_y + (max_y - hub.y) * scale_y
             positions[name] = (sx, sy)
 
-        max_radius = int(scale * 0.12)
-        node_radius = max(10, min(max_radius, int(scale * 0.5)))
+        max_radius = int(scale_x * 0.3)
+        node_radius = max(10, min(max_radius, int(scale_x * 0.5)))
 
-        return positions, scale, node_radius
+        return positions, scale_x, scale_y, node_radius
 
     def load_world(self) -> None:
-        self.positions, self.scale, self.node_radius = self.compute_layout()
+        layout = self.compute_layout()
+        self.positions, self.scale_x, self.scale_y, self.node_radius = layout
 
     def draw(self, simulation: SimulationState):
         self._handle_events()
