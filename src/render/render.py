@@ -6,11 +6,11 @@ import sys
 class Render:
     def __init__(self, world: WorldState):
         pygame.init()
-        self.screen_width = 1920
-        self.screen_height = 1080
+        self.screen_width = 3180  # 3180 - 2x  | 1920 - default
+        self.screen_height = 2160  # 2160 - 2x | 1080 - default
         self.screen = pygame.display.set_mode((self.screen_width,
                                                self.screen_height),
-                                              pygame.FULLSCREEN)
+                                              pygame.RESIZABLE)
         pygame.display.set_caption("mbotelho's Fly-in")
         self.clock = pygame.time.Clock()
         self.positions: dict[str, tuple[int, int]] = {}
@@ -53,7 +53,7 @@ class Render:
         min_y = min(h.y for h in hubs)
         max_y = max(h.y for h in hubs)
 
-        padding = 80  # between window razor and draw
+        padding = 80  # between window boudaries and drawing space
 
         usable_w = self.screen.get_width() - 2 * padding
         usable_h = self.screen.get_height() - 2 * padding
@@ -61,14 +61,14 @@ class Render:
         range_x = max(max_x - min_x, 1)
         range_y = max(max_y - min_y, 1)
 
-        scale_x = min(usable_w / range_x, 150)
-        scale_y = min(usable_h / range_y, 150)
+        scale_x = min(usable_w / range_x, 100) + 60   # +60 to make scale better
+        scale_y = min(usable_h / range_y, 100) + 60   # +60 to make scale better
 
         actual_w = range_x * scale_x
         actual_h = range_y * scale_y
 
-        offset_x = (self.screen_width - actual_w) / 2
-        offset_y = (self.screen_height - actual_h) / 2
+        offset_x = (self.screen.get_width() - actual_w) / 2
+        offset_y = (self.screen.get_width() - (actual_h)) / 4   # 4 for 2x | 2 for normal
 
         positions = {}
         for name, hub in self.world.hubs.items():
