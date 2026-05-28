@@ -107,7 +107,7 @@ class Render:
             sy = offset_y + (max_y - hub.y) * scale
             positions[name] = (sx, sy)
 
-        max_radius = int(scale * 0.15)
+        max_radius = int(scale * 0.3)
         node_radius = max(10, min(max_radius, 25))
 
         return positions, scale, node_radius
