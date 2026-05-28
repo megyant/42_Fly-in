@@ -90,16 +90,10 @@ class Render:
         ideal_scale_y = usable_h / range_y
         scale = min(ideal_scale_x, ideal_scale_y)
 
-        MAX_SCALE = 100
-
         if rrange_x == 0 and rrange_y == 0:
-            scale = MAX_SCALE
-        elif rrange_x == 0:
-            scale = min(ideal_scale_y, MAX_SCALE)
-        elif rrange_y == 0:
-            scale = min(ideal_scale_x, MAX_SCALE)
+            scale = 100
         else:
-            scale = min(scale, MAX_SCALE)
+            scale = min(scale, 400)
 
         actual_w = rrange_x * scale
         actual_h = rrange_y * scale
@@ -111,10 +105,10 @@ class Render:
         for name, hub in self.world.hubs.items():
             sx = offset_x + (hub.x - min_x) * scale
             sy = offset_y + (max_y - hub.y) * scale
-            positions[name] = (int(sx), int(sy))
+            positions[name] = (sx, sy)
 
-        max_radius = int(scale * 0.3)
-        node_radius = max(10, min(max_radius, int(scale * 0.5)))
+        max_radius = int(scale * 0.15)
+        node_radius = max(10, min(max_radius, 25))
 
         return positions, scale, node_radius
 
