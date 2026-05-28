@@ -63,6 +63,9 @@ class Render:
                             'purple'
                         ]
 
+        self.drone_img = pygame.image.load('../fly-in/assets/drone.png')
+        self.drone_sprite = self.drone_img
+
     def compute_layout(self) -> dict[str, tuple[int, int]]:
         hubs = self.world.hubs.values()
         if not hubs:
@@ -107,6 +110,13 @@ class Render:
 
         max_radius = int(scale * 0.3)
         node_radius = max(10, min(max_radius, scale * 0.2))
+
+        sprite_size = max(1, node_radius * 2)
+
+        self.drone_sprite = pygame.transform.smoothscale(
+            self.drone_img,
+            (sprite_size, sprite_size)
+        )
 
         return positions, scale, node_radius
 
@@ -179,10 +189,13 @@ class Render:
         pass
 
     def _draw_drones(self) -> None:
-        pass
-        """ color_pick = self.color_map.get('gray')
+        sprite_w = self.drone_sprite.get_width()
+        sprite_h = self.drone_sprite.get_height()
+
         for drone in range(self.world.nb_drones):
-            center_pos = self.positions['start_hub']
-            pygame.draw.rect(surface=self.screen,
-                             color=color_pick,
-                             rect=) """
+            center = self.positions['start']
+
+            render_x = center[0] - (sprite_w // 2)
+            render_y = center[1] - (sprite_h // 2)
+
+            self.screen.blit(self.drone_sprite, (render_x, render_y))
