@@ -27,7 +27,6 @@ class Render:
                                                self.heigth),
                                               pygame.RESIZABLE)
 
-
         pygame.display.set_caption("mbotelho's Fly-in")
         self.clock = pygame.time.Clock()
         self.positions: dict[str, tuple[int, int]] = {}
@@ -85,10 +84,9 @@ class Render:
         range_x = rrange_x if rrange_x > 0 else 1
         range_y = rrange_y if rrange_y > 0 else 1
 
-        # + 60 to make scale better for school
-        ideal_scale_x = usable_w / range_x
-        ideal_scale_y = usable_h / range_y
-        scale = min(ideal_scale_x, ideal_scale_y)
+        scale_x = usable_w / range_x
+        scale_y = usable_h / range_y
+        scale = min(scale_x, scale_y)
 
         if rrange_x == 0 and rrange_y == 0:
             scale = 100
