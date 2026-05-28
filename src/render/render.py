@@ -136,7 +136,7 @@ class Render:
                 sys.exit()
 
             elif event.type == pygame.VIDEORESIZE:
-                self.width, self.heigth = event.w, event.h
+                self.width, self.heigth = event.size
                 self.screen = pygame.display.set_mode((self.width,
                                                        self.heigth),
                                                       pygame.RESIZABLE)
