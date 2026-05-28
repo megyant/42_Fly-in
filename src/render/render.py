@@ -79,8 +79,11 @@ class Render:
         usable_w = self.width - 2 * padding
         usable_h = self.heigth - 2 * padding
 
-        range_x = max(max_x - min_x, 1)
-        range_y = max(max_y - min_y, 1)
+        rrange_x = max_x - min_x
+        rrange_y = max_y - min_y
+
+        range_x = rrange_x if rrange_x > 0 else 1
+        range_y = rrange_y if rrange_y > 0 else 1
 
         # + 60 to make scale better for school
         ideal_scale_x = usable_w / range_x
