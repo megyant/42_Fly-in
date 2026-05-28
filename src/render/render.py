@@ -130,15 +130,17 @@ class Render:
         self.clock.tick(60)
 
     def _handle_events(self) -> None:
-        target_size = None
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
             elif event.type == pygame.VIDEORESIZE:
-                target_size = (event.w, event.h)
+                self.width, self.heigth = event.w, event.h
+                self.screen = pygame.display.set_mode((self.width,
+                                                       self.heigth),
+                                                      pygame.RESIZABLE)
+                self.load_world()
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -148,13 +150,6 @@ class Render:
                 if event.key == pygame.K_c and (event.mod & pygame.KMOD_CTRL):
                     pygame.quit()
                     sys.exit()
-
-        if target_size:
-            self.width, self.heigth = event.w, event.h
-            self.screen = pygame.display.set_mode((self.width,
-                                                   self.heigth),
-                                                  pygame.RESIZABLE)
-            self.load_world()
 
     def _draw_connections(self) -> None:
         for connection in self.world.connections.values():
