@@ -16,22 +16,17 @@ Missing:
 """
 
 
-class Render:
+""" class Render:
     def __init__(self, world: WorldState):
         pygame.init()
-
-        self.width = 1280
-        self.heigth = 720
-
-        self.screen = pygame.display.set_mode((self.width,
-                                               self.heigth),
+        self.screen_width = 1920  # 3180 - 2x  | 1920 - default
+        self.screen_height = 1080  # 2160 - 2x | 1080 - default
+        self.screen = pygame.display.set_mode((self.screen_width,
+                                               self.screen_height),
                                               pygame.RESIZABLE)
-
-
         pygame.display.set_caption("mbotelho's Fly-in")
         self.clock = pygame.time.Clock()
         self.positions: dict[str, tuple[int, int]] = {}
-
         self.world = world
 
         self.color_map = {
@@ -66,9 +61,6 @@ class Render:
 
     def compute_layout(self) -> dict[str, tuple[int, int]]:
         hubs = self.world.hubs.values()
-        if not hubs:
-            return {}, 1.0, 1.0, 1.0
-
         min_x = min(h.x for h in hubs)
         max_x = max(h.x for h in hubs)
         min_y = min(h.y for h in hubs)
@@ -76,25 +68,22 @@ class Render:
 
         padding = 80  # between window boudaries and drawing space
 
-        usable_w = self.width - 2 * padding
-        usable_h = self.heigth - 2 * padding
+        usable_w = self.screen.get_width() - 2 * padding
+        usable_h = self.screen.get_height() - 2 * padding
 
         range_x = max(max_x - min_x, 1)
         range_y = max(max_y - min_y, 1)
 
         # + 60 to make scale better for school
-        ideal_scale_x = usable_w / range_x
-        ideal_scale_y = usable_h / range_y
-        scale = min(ideal_scale_x, ideal_scale_y)
-
-        scale_x = scale
-        scale_y = scale
+        scale_x = min(usable_w / range_x, 100)
+        scale_y = min(usable_h / range_y, 100)
 
         actual_w = range_x * scale_x
         actual_h = range_y * scale_y
 
-        offset_x = (self.width - actual_w) / 2
-        offset_y = (self.heigth - actual_h) / 2
+        offset_x = (self.screen.get_width() - actual_w) / 2
+        # 4 for 2x | 2 for normal
+        offset_y = (self.screen.get_width() - actual_h) / 4
 
         positions = {}
         for name, hub in self.world.hubs.items():
@@ -129,13 +118,6 @@ class Render:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            
-            elif event.type == pygame.VIDEORESIZE:
-                self.width, self.heigth = event.w, event.h
-                self.screen = pygame.display.set_mode((self.width,
-                                               self.heigth),
-                                              pygame.RESIZABLE)
-                self.load_world()
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -176,8 +158,7 @@ class Render:
         pass
 
     def _draw_drones(self) -> None:
-        pass
-        """ color_pick = self.color_map.get('gray')
+        color_pick = self.color_map.get('gray')
         for drone in range(self.world.nb_drones):
             center_pos = self.positions['start_hub']
             pygame.draw.rect(surface=self.screen,
