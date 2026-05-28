@@ -108,7 +108,7 @@ class Render:
             positions[name] = (sx, sy)
 
         max_radius = int(scale * 0.3)
-        node_radius = max(10, min(max_radius, 25))
+        node_radius = max(10, min(max_radius, scale * 0.2))
 
         return positions, scale, node_radius
 
