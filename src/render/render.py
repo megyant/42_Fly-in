@@ -28,6 +28,7 @@ class Render:
                                               pygame.RESIZABLE)
 
         pygame.display.set_caption("mbotelho's Fly-in")
+
         self.clock = pygame.time.Clock()
         self.positions: dict[str, tuple[int, int]] = {}
 
@@ -161,10 +162,11 @@ class Render:
 
     def _draw_connections(self) -> None:
         for connection in self.world.connections.values():
-            pygame.draw.aaline(surface=self.screen,
-                               color=(0, 0, 0),
-                               start_pos=self.positions[connection.start],
-                               end_pos=self.positions[connection.end])
+            pygame.draw.line(surface=self.screen,
+                             color=(0, 0, 0),
+                             start_pos=self.positions[connection.start],
+                             end_pos=self.positions[connection.end],
+                             width=2)
 
     def _draw_hubs(self) -> None:
         for hub in self.world.hubs.values():
@@ -186,7 +188,23 @@ class Render:
                                        radius=max(1, int(new_radius)))
 
     def _draw_labels(self) -> None:
-        pass
+        self.font = pygame.font.SysFont("Arial", round(self.scale * 0.12),
+                                        bold=True)
+        for name in self.world.hubs:
+            for hub in self.world.hubs.values():
+                pos = self.positions[name]
+
+                text_surface = self.font.render(name,
+                                                True,
+                                                self.color_map['black'])
+
+                text_w = text_surface.get_width()
+
+                render_x = pos[0] - (text_w // 2)
+
+                render_y = pos[1] - (self.node_radius * 2)
+
+                self.screen.blit(text_surface, (render_x, render_y))
 
     def _draw_drones(self) -> None:
         sprite_w = self.drone_sprite.get_width()
