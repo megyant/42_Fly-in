@@ -52,7 +52,12 @@ class Render:
                     'gold': (255, 215, 0),
                     'darkred': (139, 0, 0),
                     'crimson': (220, 20, 60),
-                    'violet': (238, 130, 238)
+                    'violet': (238, 130, 238),
+                    'silver': (192, 192, 192),
+                    'gainsboro': (220, 220, 220),
+                    'tomato': (255, 99, 71),
+                    'goldenrod': (218, 165, 32),
+                    'royalblue': (65, 105, 225)                
                     }
 
         self.rainbow_colors = [
@@ -63,6 +68,12 @@ class Render:
                             'blue',
                             'purple'
                         ]
+        self.zone_color = {
+            'normal': 'gainsboro',
+            'blocked': 'goldenrod',
+            'restricted': 'tomato',
+            'priority':'royalblue'
+        }
 
         self.drone_img = pygame.image.load('../fly-in/assets/drone.png')
         self.drone_sprite = self.drone_img
@@ -132,6 +143,7 @@ class Render:
 
         self.screen.fill((255, 255, 255))
         self._draw_connections()
+        self._draw_zones()
         self._draw_hubs()
         self._draw_labels()
         self._draw_drones()
@@ -146,6 +158,7 @@ class Render:
 
             elif event.type == pygame.VIDEORESIZE:
                 self.width, self.heigth = event.size
+                print(self.width, self.heigth)
                 self.screen = pygame.display.set_mode((self.width,
                                                        self.heigth),
                                                       pygame.RESIZABLE)
@@ -163,10 +176,28 @@ class Render:
     def _draw_connections(self) -> None:
         for connection in self.world.connections.values():
             pygame.draw.line(surface=self.screen,
-                             color=(0, 0, 0),
+                             color=self.color_map['silver'],
                              start_pos=self.positions[connection.start],
                              end_pos=self.positions[connection.end],
                              width=2)
+    
+    def _draw_zones(self) -> None:
+        for hub in self.world.hubs.values():
+            color_pick = self.color_map['white']
+            if hub.processed_meta.zone == 'normal':
+                color_pick = self.color_map.get(self.zone_color['normal'])
+            elif hub.processed_meta.zone == 'blocked':
+                color_pick = self.color_map.get(self.zone_color['blocked'])
+            elif hub.processed_meta.zone == 'restricted':
+                color_pick = self.color_map.get(self.zone_color['restricted'])
+            elif hub.processed_meta.zone == 'priority':
+                color_pick = self.color_map.get(self.zone_color['priority'])
+            
+            pygame.draw.circle(surface=self.screen,
+                                   color=color_pick,
+                                   center=self.positions[hub.name],
+                                   radius=self.node_radius + 10)
+
 
     def _draw_hubs(self) -> None:
         for hub in self.world.hubs.values():
@@ -188,7 +219,7 @@ class Render:
                                        radius=max(1, int(new_radius)))
 
     def _draw_labels(self) -> None:
-        self.font = pygame.font.SysFont("Arial", round(self.scale * 0.12),
+        self.font = pygame.font.SysFont("Arial", round(self.scale * 0.11),
                                         bold=True)
         for name in self.world.hubs:
             for hub in self.world.hubs.values():
@@ -202,9 +233,14 @@ class Render:
 
                 render_x = pos[0] - (text_w // 2)
 
-                render_y = pos[1] - (self.node_radius * 2)
+                render_y = pos[1] + (self.node_radius * 1.5)
 
                 self.screen.blit(text_surface, (render_x, render_y))
+    
+    def _draw_zone_caption(self) -> None:
+        self.zone_font = pygame.font.SysFont("Arial", round(self.scale * 0.11),
+                                        bold=False)
+        
 
     def _draw_drones(self) -> None:
         sprite_w = self.drone_sprite.get_width()
