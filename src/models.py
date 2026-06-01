@@ -1,5 +1,5 @@
 from pydantic.dataclasses import dataclass
-from src.parser.validation_parse import HubModel, ConnectionModel
+from src.parser.pydantic_validation import HubModel, ConnectionModel
 
 
 @dataclass
