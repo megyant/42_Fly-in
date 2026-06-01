@@ -57,7 +57,7 @@ class Render:
                     'gainsboro': (220, 220, 220),
                     'tomato': (255, 99, 71),
                     'goldenrod': (218, 165, 32),
-                    'royalblue': (65, 105, 225)                
+                    'royalblue': (65, 105, 225)
                     }
 
         self.rainbow_colors = [
@@ -72,7 +72,7 @@ class Render:
             'normal': 'gainsboro',
             'blocked': 'goldenrod',
             'restricted': 'tomato',
-            'priority':'royalblue'
+            'priority': 'royalblue'
         }
 
         self.drone_img = pygame.image.load('../fly-in/assets/drone.png')
@@ -144,6 +144,7 @@ class Render:
         self.screen.fill((255, 255, 255))
         self._draw_connections()
         self._draw_zones()
+        self._draw_zone_legend()
         self._draw_hubs()
         self._draw_labels()
         self._draw_drones()
@@ -180,7 +181,7 @@ class Render:
                              start_pos=self.positions[connection.start],
                              end_pos=self.positions[connection.end],
                              width=2)
-    
+
     def _draw_zones(self) -> None:
         for hub in self.world.hubs.values():
             color_pick = self.color_map['white']
@@ -192,12 +193,11 @@ class Render:
                 color_pick = self.color_map.get(self.zone_color['restricted'])
             elif hub.processed_meta.zone == 'priority':
                 color_pick = self.color_map.get(self.zone_color['priority'])
-            
-            pygame.draw.circle(surface=self.screen,
-                                   color=color_pick,
-                                   center=self.positions[hub.name],
-                                   radius=self.node_radius + 10)
 
+            pygame.draw.circle(surface=self.screen,
+                               color=color_pick,
+                               center=self.positions[hub.name],
+                               radius=self.node_radius + 7)
 
     def _draw_hubs(self) -> None:
         for hub in self.world.hubs.values():
@@ -222,25 +222,55 @@ class Render:
         self.font = pygame.font.SysFont("Arial", round(self.scale * 0.11),
                                         bold=True)
         for name in self.world.hubs:
-            for hub in self.world.hubs.values():
-                pos = self.positions[name]
+            pos = self.positions[name]
 
-                text_surface = self.font.render(name,
-                                                True,
-                                                self.color_map['black'])
+            text_surface = self.font.render(name,
+                                            True,
+                                            self.color_map['black'])
 
-                text_w = text_surface.get_width()
+            text_w = text_surface.get_width()
 
-                render_x = pos[0] - (text_w // 2)
+            render_x = pos[0] - (text_w // 2)
 
-                render_y = pos[1] + (self.node_radius * 1.5)
+            render_y = pos[1] + (self.node_radius * 1.5)
 
-                self.screen.blit(text_surface, (render_x, render_y))
-    
-    def _draw_zone_caption(self) -> None:
-        self.zone_font = pygame.font.SysFont("Arial", round(self.scale * 0.11),
-                                        bold=False)
-        
+            self.screen.blit(text_surface, (render_x, render_y))
+
+    def _draw_zone_legend(self) -> None:
+        font_size = 14
+
+        self.zone_font = pygame.font.SysFont("Arial", font_size,
+                                             bold=False)
+
+        text1 = 'zones:'
+        text_surface = self.zone_font.render(text1,
+                                             True,
+                                             self.color_map['black'])
+        self.screen.blit(text_surface, (20, self.heigth-100 - 10))
+
+        texts = ['normal',
+                 'blocked',
+                 'restricted',
+                 'priority']
+        for i, text in enumerate(texts):
+            color = self.color_map.get(self.zone_color[text])
+
+            text_surface2 = self.zone_font.render(text,
+                                                  True,
+                                                  self.color_map['black'])
+
+            render_x = 45
+
+            render_y = self.heigth - 20 - i * 20 - 10
+
+            circle_y = self.heigth - 70 + i * 20 - 10
+
+            self.screen.blit(text_surface2, (render_x, render_y))
+
+            pygame.draw.circle(surface=self.screen,
+                               color=color,
+                               center=(30, circle_y),
+                               radius=5)
 
     def _draw_drones(self) -> None:
         sprite_w = self.drone_sprite.get_width()
