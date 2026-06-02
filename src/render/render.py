@@ -248,10 +248,10 @@ class Render:
                                              self.color_map['black'])
         self.screen.blit(text_surface, (20, self.heigth-100 - 10))
 
-        texts = ['normal',
-                 'blocked',
+        texts = ['priority',
                  'restricted',
-                 'priority']
+                 'blocked',
+                 'normal']
         for i, text in enumerate(texts):
             color = self.color_map.get(self.zone_color[text])
 
