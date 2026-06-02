@@ -159,7 +159,6 @@ class Render:
 
             elif event.type == pygame.VIDEORESIZE:
                 self.width, self.heigth = event.size
-                print(self.width, self.heigth)
                 self.screen = pygame.display.set_mode((self.width,
                                                        self.heigth),
                                                       pygame.RESIZABLE)
@@ -248,10 +247,10 @@ class Render:
                                              self.color_map['black'])
         self.screen.blit(text_surface, (20, self.heigth-100 - 10))
 
-        texts = ['blocked',
-                 'normal',
-                 'priority',
-                 'restricted']
+        texts = ['priority',
+                 'restricted',
+                 'blocked',
+                 'normal']
         for i, text in enumerate(texts):
             color = self.color_map.get(self.zone_color[text])
 
@@ -263,7 +262,7 @@ class Render:
 
             render_y = self.heigth - 20 - i * 20 - 10
 
-            circle_y = self.heigth - 70 + i * 20 - 10
+            circle_y = self.heigth - 10 - i * 20 - 10
 
             self.screen.blit(text_surface2, (render_x, render_y))
 
