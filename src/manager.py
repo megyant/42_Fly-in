@@ -1,4 +1,4 @@
-from src.parser.validation_parse import ValidationParser
+from src.parser.pydantic_validation import ValidationParser
 from src.models import WorldState
 from src.render.simulation import SimulationStatus
 from src.render.render import Render
