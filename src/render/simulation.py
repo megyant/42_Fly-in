@@ -23,6 +23,8 @@ class SimulationStatus:
 
     def finished(self) -> bool:
         pass
+        """ if self.state.drone_positions['name'] == 'end':
+            self.finished = True """
 
     def step(self) -> None:
         pass
