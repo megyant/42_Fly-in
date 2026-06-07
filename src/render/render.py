@@ -147,7 +147,7 @@ class Render:
         self._draw_zone_legend()
         self._draw_hubs()
         self._draw_labels()
-        self._draw_drones()
+        self._draw_drones(simulation=simulation)
         pygame.display.update()
         self.clock.tick(60)
 
@@ -271,12 +271,13 @@ class Render:
                                center=(30, circle_y),
                                radius=5)
 
-    def _draw_drones(self) -> None:
+    def _draw_drones(self, simulation: SimulationState) -> None:
         sprite_w = self.drone_sprite.get_width()
         sprite_h = self.drone_sprite.get_height()
 
         for drone in range(self.world.nb_drones):
-            center = self.positions['start']
+            current_pos = simulation.drone_positions[f"D{drone}"]
+            center = self.positions[current_pos]
 
             render_x = center[0] - (sprite_w // 2)
             render_y = center[1] - (sprite_h // 2)

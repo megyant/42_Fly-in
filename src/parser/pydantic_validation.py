@@ -29,7 +29,7 @@ class HubModel(BaseModel):
     processed_meta: Optional[MetaModelDrones] = None
 
     @model_validator(mode='after')
-    def vaidate_hub_name(self) -> 'HubModel':
+    def validate_hub_name(self) -> 'HubModel':
         if ' ' in self.name or '-' in self.name:
             raise ValueError(f"Invalid hub name: '{self.name}'. "
                              "Spaces and dashes are forbidden")

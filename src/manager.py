@@ -2,6 +2,7 @@ from src.parser.pydantic_validation import ValidationParser
 from src.models import WorldState
 from src.render.simulation import SimulationStatus
 from src.render.render import Render
+from src.algorithm.algorithm import Algorithm
 
 
 class Manager:
@@ -32,15 +33,25 @@ class Manager:
         )
 
     def initialize_simulation(self) -> None:
-        self.simulation = SimulationStatus(self.world, self.render)
+        self.simulation = SimulationStatus(self.world, self.render, self.algo)
 
     def initialize_render(self) -> None:
         self.render = Render(self.world)
         self.render.load_world()
 
+    def start_algorithm(self) -> None:
+        self.algo = Algorithm(self.world)
+        self.algo.zonecost_table()
+        self.algo.cost_table()
+        self.algo.graph_table()
+        self.algo.find_lowest_cost()
+        self.algo.dijkstra()
+        self.algo.reconstruct_path()
+
     def start_simulation(self) -> None:
         self.initialize_world()
         self.initialize_render()
+        self.start_algorithm()
         self.initialize_simulation()
 
         self.simulation.run()
