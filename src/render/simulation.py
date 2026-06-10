@@ -21,8 +21,12 @@ class SimulationStatus:
         )
 
     def run(self) -> None:
-        print(self.state.hub_occupancy)
+        # print(self.state.hub_occupancy)
         while not self.finished():
+            for drone in self.state.drone_positions.keys():
+                if self.state.drone_positions[drone] != self.world.start:
+                    print(f"{int(drone.split('D')[1]) + 1}-{self.state.drone_positions[drone]}", end=" ")
+            print()
             self.step()
             self.renderer.draw(self.state)
         print(self.state.turn)
@@ -34,7 +38,6 @@ class SimulationStatus:
                    self.state.drone_positions.values())
 
     def step(self) -> None:
-        print(f"Turn {self.state.turn}, in_transit: {self.state.in_transit}")
 
         self.planned_moves = {}
         tentative_occupancy = self.state.hub_occupancy.copy()    

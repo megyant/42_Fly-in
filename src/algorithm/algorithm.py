@@ -1,10 +1,11 @@
 from src.models import WorldState
+import heapq
 
 
 class Algorithm:
     def __init__(self, world: WorldState) -> None:
         self.world = world
-        self.processed = []
+        self.processed = set()
         self.zone_costs = {}
         self.costs = {}
         self.parents = {}
@@ -43,39 +44,21 @@ class Algorithm:
             self.graph[hub.start][hub.end] = self.zone_costs[hub.end]
             self.graph[hub.end][hub.start] = self.zone_costs[hub.start]
 
-    def find_lowest_cost(self):
-        lowest_cost = float("inf")
-        lowest_cost_node = None
-        for node in self.costs:
-            cost = self.costs[node]
-            if node not in self.processed:
-                if cost < lowest_cost:
-                    lowest_cost = cost
-                    lowest_cost_node = node
-                elif (lowest_cost_node is not None and
-                      cost == lowest_cost and
-                      self.world.hubs[lowest_cost_node].processed_meta.zone != 'priority' and
-                      self.world.hubs[node].processed_meta.zone == 'priority'):
-                    lowest_cost_node = node
-        return lowest_cost_node
-
     def dijkstra(self) -> None:
-        node = self.find_lowest_cost()
-
-        while node is not None:
+        heap = [(0, self.world.start)]
+        while heap:
+            cost, node = heapq.heappop(heap)
             if node == self.world.end:
                 break
-            cost = self.costs[node]
-            neighbours = self.graph[node]
-
-            for n in neighbours.keys():
-                new_cost = cost + neighbours[n]
-                if self.costs[n] > new_cost:
-                    self.costs[n] = new_cost
-                    self.parents[n] = node
-
-            self.processed.append(node)
-            node = self.find_lowest_cost()
+            if node in self.processed:
+                continue
+            self.processed.add(node)
+            for neigbour, weight in self.graph[node].items():
+                new_cost = cost + weight
+                if new_cost < self.costs[neigbour]:
+                    self.costs[neigbour] = new_cost
+                    self.parents[neigbour] = node
+                    heap.append((new_cost, neigbour))
 
     def reconstruct_path(self) -> list:
         self.final_path = []
