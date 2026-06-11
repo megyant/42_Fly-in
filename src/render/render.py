@@ -5,12 +5,7 @@ import sys
 
 """
 Missing:
-- Zone representative border and subtitles
-- Draw subtitles for hubs
-- Draw the drones
 - Customize it better (?)
-
-- Obv the algo still needs to be done
 
 - Test parsing thoroughly
 """
@@ -149,7 +144,7 @@ class Render:
         self._draw_labels()
         self._draw_drones(simulation=simulation)
         pygame.display.update()
-        self.clock.tick(60)
+        self.clock.tick(1)
 
     def _handle_events(self) -> None:
         for event in pygame.event.get():
@@ -174,12 +169,17 @@ class Render:
                     sys.exit()
 
     def _draw_connections(self) -> None:
-        for connection in self.world.connections.values():
+        self.center = {}
+        for key, connection in self.world.connections.items():
             pygame.draw.line(surface=self.screen,
                              color=self.color_map['silver'],
                              start_pos=self.positions[connection.start],
                              end_pos=self.positions[connection.end],
                              width=2)
+            start = self.positions[connection.start]
+            end = self.positions[connection.end]
+            self.center[key] = ((start[0] + end[0]) / 2,
+                                (start[1] + end[1]) / 2)
 
     def _draw_zones(self) -> None:
         for hub in self.world.hubs.values():
@@ -277,7 +277,13 @@ class Render:
 
         for drone in range(self.world.nb_drones):
             current_pos = simulation.drone_positions[f"D{drone}"]
-            center = self.positions[current_pos]
+
+            if '-' in current_pos:
+                center = self.center[current_pos]
+            else:
+                if current_pos not in self.positions:
+                    continue
+                center = self.positions[current_pos]
 
             render_x = center[0] - (sprite_w // 2)
             render_y = center[1] - (sprite_h // 2)

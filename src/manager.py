@@ -44,8 +44,7 @@ class Manager:
         self.algo.zonecost_table()
         self.algo.cost_table()
         self.algo.graph_table()
-        self.algo.find_lowest_cost()
-        self.algo.dijkstra_improved()
+        self.algo.dijkstra()
         self.algo.reconstruct_path()
 
     def start_simulation(self) -> None:
