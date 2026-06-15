@@ -11,6 +11,18 @@ Missing:
 """
 
 
+class DroneMovement:
+    def __init__(self, pos: tuple):
+        self.pos = pygame.Vector2(pos)
+        self.speed = 0.08
+
+    def update(self, target: pygame.Vector2):
+        self.pos = self.pos.lerp(target, self.speed)
+
+    def reached(self, target: pygame.Vector2) -> bool:
+        return self.pos.distance_to(target) < 0.5
+
+
 class Render:
     def __init__(self, world: WorldState):
         pygame.init()
@@ -72,6 +84,7 @@ class Render:
 
         self.drone_img = pygame.image.load('../fly-in/assets/drone.png')
         self.drone_sprite = self.drone_img
+        self.drone_movement: dict[str, DroneMovement] = {}
 
     def compute_layout(self) -> dict[str, tuple[int, int]]:
         hubs = self.world.hubs.values()
@@ -83,7 +96,7 @@ class Render:
         min_y = min(h.y for h in hubs)
         max_y = max(h.y for h in hubs)
 
-        padding = 80  # between window boudaries and drawing space
+        padding = 100  # between window boudaries and drawing space
 
         usable_w = self.width - 2 * padding
         usable_h = self.heigth - 2 * padding
@@ -130,6 +143,9 @@ class Render:
     def load_world(self) -> None:
         layout = self.compute_layout()
         self.positions, self.scale, self.node_radius = layout
+        start_pos = self.positions[self.world.start]
+        for i in range(self.world.nb_drones):
+            self.drone_movement[f"D{i}"] = DroneMovement(start_pos)
 
     def draw(self, simulation: SimulationState):
         self._handle_events()
@@ -142,9 +158,11 @@ class Render:
         self._draw_zone_legend()
         self._draw_hubs()
         self._draw_labels()
-        self._draw_drones(simulation=simulation)
+        all_arrived = self._draw_drones(simulation=simulation)
         pygame.display.update()
-        self.clock.tick(1)
+        self.clock.tick(60)
+
+        return all_arrived
 
     def _handle_events(self) -> None:
         for event in pygame.event.get():
@@ -196,12 +214,14 @@ class Render:
             pygame.draw.circle(surface=self.screen,
                                color=color_pick,
                                center=self.positions[hub.name],
-                               radius=self.node_radius + 7)
+                               radius=self.node_radius * 1.2)
 
     def _draw_hubs(self) -> None:
         for hub in self.world.hubs.values():
             if hub.processed_meta.color != 'rainbow':
                 color_pick = self.color_map.get(hub.processed_meta.color)
+                if color_pick is None:
+                    color_pick = pygame.Color(hub.processed_meta.color)
                 pygame.draw.circle(surface=self.screen,
                                    color=color_pick,
                                    center=self.positions[hub.name],
@@ -231,7 +251,7 @@ class Render:
 
             render_x = pos[0] - (text_w // 2)
 
-            render_y = pos[1] + (self.node_radius * 1.5)
+            render_y = pos[1] + (self.node_radius * 1.2)
 
             self.screen.blit(text_surface, (render_x, render_y))
 
@@ -274,18 +294,30 @@ class Render:
     def _draw_drones(self, simulation: SimulationState) -> None:
         sprite_w = self.drone_sprite.get_width()
         sprite_h = self.drone_sprite.get_height()
+        all_arrived = True
 
         for drone in range(self.world.nb_drones):
-            current_pos = simulation.drone_positions[f"D{drone}"]
+            drone_key = f"D{drone}"
+            current_pos = simulation.drone_positions[drone_key]
 
             if '-' in current_pos:
-                center = self.center[current_pos]
+                if current_pos not in self.center:
+                    continue
+                target = pygame.Vector2(self.center[current_pos])
             else:
                 if current_pos not in self.positions:
                     continue
-                center = self.positions[current_pos]
+                target = pygame.Vector2(self.positions[current_pos])
 
-            render_x = center[0] - (sprite_w // 2)
-            render_y = center[1] - (sprite_h // 2)
+            visual = self.drone_movement[drone_key]
+            visual.update(target)
+
+            if visual.pos.distance_to(target) > 0.5:
+                all_arrived = False
+
+            render_x = visual.pos.x - (sprite_w // 2)
+            render_y = visual.pos.y - (sprite_h // 2)
 
             self.screen.blit(self.drone_sprite, (render_x, render_y))
+
+        return all_arrived
