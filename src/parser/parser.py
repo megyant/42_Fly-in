@@ -33,7 +33,7 @@ class Parser:
         self.connections: List[Dict[str, Any]] = []
         self.line_number: int = 0
         self.connections = []
-        self.seen_connections = set()
+        self.seen_connections: set = set()
 
     def parse_file(self, filepath: str) -> None:
         """

@@ -1,22 +1,15 @@
 import pygame
 from src.models import WorldState, SimulationState
+from typing import Tuple, Dict
 import sys
 
 
-"""
-Missing:
-- Customize it better (?)
-
-- Test parsing thoroughly
-"""
-
-
 class DroneMovement:
-    def __init__(self, pos: tuple):
+    def __init__(self, pos: tuple) -> None:
         self.pos = pygame.Vector2(pos)
         self.speed = 0.08
 
-    def update(self, target: pygame.Vector2):
+    def update(self, target: pygame.Vector2) -> None:
         self.pos = self.pos.lerp(target, self.speed)
 
     def reached(self, target: pygame.Vector2) -> bool:
@@ -24,7 +17,7 @@ class DroneMovement:
 
 
 class Render:
-    def __init__(self, world: WorldState):
+    def __init__(self, world: WorldState) -> None:
         pygame.init()
 
         self.width = 1280
@@ -37,7 +30,7 @@ class Render:
         pygame.display.set_caption("mbotelho's Fly-in")
 
         self.clock = pygame.time.Clock()
-        self.positions: dict[str, tuple[int, int]] = {}
+        self.positions: dict[str, tuple[float, float]] = {}
 
         self.world = world
 
@@ -82,14 +75,15 @@ class Render:
             'priority': 'royalblue'
         }
 
-        self.drone_img = pygame.image.load('../fly-in/assets/drone.png')
+        self.drone_img = pygame.image.load('../fly-in/src/assets/drone.png')
         self.drone_sprite = self.drone_img
         self.drone_movement: dict[str, DroneMovement] = {}
 
-    def compute_layout(self) -> dict[str, tuple[int, int]]:
+    def compute_layout(self) -> Tuple[Dict[str, Tuple[float, float]],
+                                      float, float]:
         hubs = self.world.hubs.values()
         if not hubs:
-            return {}, 1.0, 1.0, 1.0
+            return {}, 1.0, 1.0
 
         min_x = min(h.x for h in hubs)
         max_x = max(h.x for h in hubs)
@@ -147,7 +141,7 @@ class Render:
         for i in range(self.world.nb_drones):
             self.drone_movement[f"D{i}"] = DroneMovement(start_pos)
 
-    def draw(self, simulation: SimulationState):
+    def draw(self, simulation: SimulationState) -> bool:
         self._handle_events()
 
         self.simulation = simulation
@@ -156,6 +150,7 @@ class Render:
         self._draw_connections()
         self._draw_zones()
         self._draw_zone_legend()
+        self._draw_turns()
         self._draw_hubs()
         self._draw_labels()
         all_arrived = self._draw_drones(simulation=simulation)
@@ -201,15 +196,17 @@ class Render:
 
     def _draw_zones(self) -> None:
         for hub in self.world.hubs.values():
+            if hub.processed_meta is None:
+                continue
             color_pick = self.color_map['white']
             if hub.processed_meta.zone == 'normal':
-                color_pick = self.color_map.get(self.zone_color['normal'])
+                color_pick = self.color_map[self.zone_color['normal']]
             elif hub.processed_meta.zone == 'blocked':
-                color_pick = self.color_map.get(self.zone_color['blocked'])
+                color_pick = self.color_map[self.zone_color['blocked']]
             elif hub.processed_meta.zone == 'restricted':
-                color_pick = self.color_map.get(self.zone_color['restricted'])
+                color_pick = self.color_map[self.zone_color['restricted']]
             elif hub.processed_meta.zone == 'priority':
-                color_pick = self.color_map.get(self.zone_color['priority'])
+                color_pick = self.color_map[self.zone_color['priority']]
 
             pygame.draw.circle(surface=self.screen,
                                color=color_pick,
@@ -218,10 +215,16 @@ class Render:
 
     def _draw_hubs(self) -> None:
         for hub in self.world.hubs.values():
+            if hub.processed_meta is None:
+                continue
             if hub.processed_meta.color != 'rainbow':
-                color_pick = self.color_map.get(hub.processed_meta.color)
-                if color_pick is None:
-                    color_pick = pygame.Color(hub.processed_meta.color)
+                color_name = hub.processed_meta.color
+                color_pick: Tuple[int, int, int] | pygame.Color
+                if color_name in self.color_map:
+                    color_pick = self.color_map[color_name]
+                else:
+                    color_pick = pygame.Color(color_name or 'blue')
+
                 pygame.draw.circle(surface=self.screen,
                                    color=color_pick,
                                    center=self.positions[hub.name],
@@ -231,7 +234,7 @@ class Render:
                 for i, color in enumerate(self.rainbow_colors):
                     ring_factor = (total_rings - i) / total_rings
                     new_radius = self.node_radius * ring_factor
-                    color_pick = self.color_map.get(color)
+                    color_pick = self.color_map[color]
                     pygame.draw.circle(surface=self.screen,
                                        color=color_pick,
                                        center=self.positions[hub.name],
@@ -272,7 +275,7 @@ class Render:
                  'blocked',
                  'normal']
         for i, text in enumerate(texts):
-            color = self.color_map.get(self.zone_color[text])
+            color = self.color_map[self.zone_color[text]]
 
             text_surface2 = self.zone_font.render(text,
                                                   True,
@@ -291,7 +294,20 @@ class Render:
                                center=(30, circle_y),
                                radius=5)
 
-    def _draw_drones(self, simulation: SimulationState) -> None:
+    def _draw_turns(self) -> None:
+        text = f"Turns: {self.simulation.turn}"
+
+        font_size = 20
+
+        self.turns_font = pygame.font.SysFont("Arial", font_size,
+                                              bold=False)
+
+        text_surface = self.turns_font.render(text,
+                                              True,
+                                              self.color_map['black'])
+        self.screen.blit(text_surface, (20, 10))
+
+    def _draw_drones(self, simulation: SimulationState) -> bool:
         sprite_w = self.drone_sprite.get_width()
         sprite_h = self.drone_sprite.get_height()
         all_arrived = True

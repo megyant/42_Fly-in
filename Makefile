@@ -36,7 +36,7 @@ fclean: clean
 lint: flake8 mypy
 
 flake8:
-	-$(PYTHON) -m flake8 .
+	-$(PYTHON) -m flake8 src
 
 mypy:
 	-$(PYTHON) -m mypy $(SRC) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs

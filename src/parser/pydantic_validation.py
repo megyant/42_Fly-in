@@ -1,6 +1,6 @@
 from src.parser.parser import Parser
 from pydantic import BaseModel, Field, ValidationError, model_validator
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any, Tuple
 from enum import Enum
 
 
@@ -14,7 +14,6 @@ class Zone(str, Enum):
 
 class MetaModelDrones(BaseModel):
     """ Class that stores all metadata for hubs. """
-    model_config = {"extra": "forbid"}
     zone: Optional[Zone] = Zone.normal
     color: Optional[str] = None
     max_drones: Optional[int] = Field(default=1, ge=1)
@@ -22,7 +21,7 @@ class MetaModelDrones(BaseModel):
 
 class HubModel(BaseModel):
     """ Class that stores all parameters from hubs. """
-    name: str
+    name: Any
     x: int = Field(ge=-100)  # Missing field
     y: int = Field(ge=-100)  # Missing field
     metadata: Optional[List[str]] = None
@@ -44,7 +43,7 @@ class HubModel(BaseModel):
         if self.metadata is None:
             self.processed_meta = MetaModelDrones()
             return self
-        data = {}
+        data: dict[str, Any] = {}
         for meta in self.metadata:
             clean = meta.strip('[]')
             if '=' in clean:
@@ -55,6 +54,8 @@ class HubModel(BaseModel):
                 raise ValueError(f"Wrong data format in metadata: {meta}")
 
         try:
+            if data.get("zone"):
+                data["zone"] = Zone(data["zone"])
             self.processed_meta = MetaModelDrones(**data)
         except (ValueError, ValidationError):
             print(f"\nError: {data}: {data[k]} in {self.metadata} could not be"
@@ -66,7 +67,6 @@ class HubModel(BaseModel):
 
 class MetaModelConnect(BaseModel):
     """ Class that stores all metadata for connections. """
-    model_config = {"extra": "forbid"}
     max_link_capacity: Optional[int] = Field(default=1, ge=1)
 
 
@@ -86,7 +86,7 @@ class ConnectionModel(BaseModel):
         if self.metadata is None:
             self.processed_meta = MetaModelConnect()
             return self
-        data = {}
+        data: dict[str, Any] = {}
         for meta in self.metadata:
             clean = meta.strip('[]')
 
@@ -100,8 +100,8 @@ class ConnectionModel(BaseModel):
         try:
             self.processed_meta = MetaModelConnect(**data)
         except (ValueError, ValidationError):
-            print(f"\nError: {data}: {data[k]} in {self.metadata} could not be"
-                  "processed.\nUsing default value defined for "
+            print(f"\nError: could not process {data} in {self.metadata}"
+                  ".\nUsing default value defined for "
                   "max_link_capacity.\n")
             self.processed_meta = MetaModelConnect()
         return self
@@ -121,7 +121,7 @@ class ValidationParser(Parser):
         """
         super().__init__()
 
-    def init_hubs(self) -> None:
+    def init_hubs(self) -> Tuple[Dict[str, HubModel], str, str]:
         """
             Initialize and store the parsed dictionaries into a HubModel().
         """
@@ -185,11 +185,13 @@ class ValidationParser(Parser):
         try:
             # store each connection into a ConnectionModel()
             connections = [ConnectionModel(
-                            start=connection.get("connection").split('-')[0],
-                            end=connection.get("connection").split('-')[1],
+                            start=conn_str.split('-')[0],
+                            end=conn_str.split('-')[1],
                             metadata=connection.get("metadata")
                                         )
                            for connection in self.connections
+                           if ((conn_str := connection.get("connection"))
+                               is not None)
                            ]
 
             connect_dict: Dict[str, ConnectionModel] = {f"{c.start}-{c.end}":
@@ -201,11 +203,11 @@ class ValidationParser(Parser):
                              f"Line: {self.line_number}")
 
     def build_neighbours(self,
-                         conn: dict[str, ConnectionModel]) -> dict[str,
-                                                                   list[str]]:
-        neighbours = {}
+                         conne: dict[str, ConnectionModel]) -> dict[str,
+                                                                    list[str]]:
+        neighbours: dict[str, list[str]] = {}
 
-        for conn in conn.values():
+        for conn in conne.values():
             neighbours.setdefault(conn.start, []).append(conn.end)
             neighbours.setdefault(conn.end, []).append(conn.start)
 

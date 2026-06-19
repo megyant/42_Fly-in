@@ -6,7 +6,7 @@ from src.algorithm.algorithm import Algorithm
 
 
 class Manager:
-    def __init__(self, filepath) -> None:
+    def __init__(self, filepath: str) -> None:
         self.filepath = filepath
 
     def parsing(self) -> None:

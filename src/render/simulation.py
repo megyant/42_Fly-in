@@ -1,5 +1,6 @@
 from src.render.render import Render
 from src.models import WorldState, SimulationState
+from src.parser.pydantic_validation import Zone
 from src.algorithm.algorithm import Algorithm
 
 
@@ -100,24 +101,27 @@ class SimulationStatus:
             else:
                 connection_key = f"{next_pos}-{current_pos}"
 
-            # Place drone on connection in 1st round of restricted
-            if self.world.hubs[next_pos].processed_meta.zone == 'restricted':
-                # get the position
+            next_hub_meta = self.world.hubs[next_pos].processed_meta
+
+            if next_hub_meta is None:
+                continue
+            elif next_hub_meta == Zone.restricted:
                 self.state.in_transit[drone] = (current_pos, next_pos)
-                # get connection
                 self.state.drone_positions[drone] = connection_key
-                # reduce from hub
                 self.state.hub_occupancy[current_pos] -= 1
                 tentative_occupancy[current_pos] -= 1
-                # increase in connection
                 self.state.connection_occupancy[connection_key] += 1
                 continue
 
-            # get essential variables
             next_pos_meta = self.world.hubs[next_pos].processed_meta
+            assert next_pos_meta is not None
             max_drones_next = next_pos_meta.max_drones
             connection = self.world.connections[connection_key].processed_meta
+            if connection is None:
+                continue
             max_link_capacity_conn = connection.max_link_capacity
+            if max_drones_next is None or max_link_capacity_conn is None:
+                continue
             connection_occup = self.state.connection_occupancy[connection_key]
 
             # is the hub free
