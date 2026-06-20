@@ -6,9 +6,8 @@ from src.algorithm.algorithm import Algorithm
 
 
 class Manager:
-    def __init__(self, filepath: str, flag: bool) -> None:
+    def __init__(self, filepath: str) -> None:
         self.filepath = filepath
-        self.flag = flag
 
     def parsing(self) -> None:
         self.validation = ValidationParser()
@@ -54,4 +53,4 @@ class Manager:
         self.start_algorithm()
         self.initialize_simulation()
 
-        self.simulation.run(self.flag)
+        self.simulation.run()

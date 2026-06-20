@@ -12,18 +12,14 @@ Next:
 
 def main() -> None:
     try:
-        flag = False
         if (len(sys.argv) != 2):
-            if len(sys.argv) == 3 and sys.argv[2] == "--info":
-                flag = True
-            else:
-                print("Error: Enter filepath.\n"
-                      "Usage: python3 -m src.fly-in filepath/file.txt")
-                sys.exit(1)
+            print("Error: Enter filepath.\n"
+                  "Usage: python3 -m src.fly-in filepath/file.txt")
+            sys.exit(1)
 
         args = sys.argv[1]
 
-        manager = Manager(args, flag)
+        manager = Manager(args)
 
         manager.start_simulation()
 

@@ -23,31 +23,22 @@ class SimulationStatus:
             in_transit={}
         )
 
-    def run(self, flag: bool) -> None:
+    def run(self) -> None:
         steps = []
         print("\n=== Starting Simulation ===")
         print(f"\nNumber of drones: {self.world.nb_drones}\n")
         while not self.finished():
             self.step()
 
-            if flag is True:
-                pass
-                # hub_occ = self.state.hub_occupancy
-               # conn_occ = self.state.connection_occupancy
-
             # print planned drone moves
             for drone, pos in self.planned_moves.items():
                 drone_num = int(drone.split('D')[1]) + 1
                 print(f"D{drone_num}-{pos}", end=" ")
-                # print(f"({pos}:{hub_occ[pos]} / {self.world.hubs[pos].processed_meta.max_drones}", end=" ")
-
-                # print(f"connections: { {k: v for k, v in conn_occ.items() if v > 0} })")
 
             # print drones in 2nd turn of restricted zone
             for drone, pos in self.resolved_transits.items():
                 drone_num = int(drone.split('D')[1]) + 1
                 print(f"D{drone_num}-{pos}", end=" ")
-                # print(f"({pos}:{hub_occ[pos]} / {self.world.hubs[pos].processed_meta.max_drones})", end=" ") """
             print()
 
             # save each step to use in render
@@ -114,7 +105,7 @@ class SimulationStatus:
 
             if next_hub_meta is None:
                 continue
-            elif next_hub_meta == Zone.restricted:
+            elif next_hub_meta.zone == Zone.restricted:
                 self.state.in_transit[drone] = (current_pos, next_pos)
                 self.state.drone_positions[drone] = connection_key
                 self.state.hub_occupancy[current_pos] -= 1
