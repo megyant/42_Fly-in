@@ -13,6 +13,12 @@ class SimulationStatus:
         self.algorithm = algorithm
         self.path_index = {hub: i for i, hub in enumerate(
             self.algorithm.final_path)}
+        self.hub_max = {name: hub.processed_meta.max_drones
+                        for name, hub in world.hubs.items()
+                        if hub.processed_meta}
+        self.conn_max = {key: conn.processed_meta.max_link_capacity
+                         for key, conn in world.connections.items()
+                         if conn.processed_meta}
         self.state = SimulationState(
             turn=0,
             drone_positions={f"D{i}": world.start
@@ -113,13 +119,8 @@ class SimulationStatus:
                 self.state.connection_occupancy[connection_key] += 1
                 continue
 
-            next_pos_meta = self.world.hubs[next_pos].processed_meta
-            assert next_pos_meta is not None
-            max_drones_next = next_pos_meta.max_drones
-            connection = self.world.connections[connection_key].processed_meta
-            if connection is None:
-                continue
-            max_link_capacity_conn = connection.max_link_capacity
+            max_drones_next = self.hub_max[next_pos]
+            max_link_capacity_conn = self.conn_max[connection_key]
             if max_drones_next is None or max_link_capacity_conn is None:
                 continue
             connection_occup = self.state.connection_occupancy[connection_key]
