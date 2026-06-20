@@ -1,5 +1,5 @@
 import pygame
-from src.models import WorldState, SimulationState
+from src.simulation.models import WorldState, SimulationState
 from typing import Tuple, Dict
 import sys
 

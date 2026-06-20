@@ -1,4 +1,4 @@
-from src.models import WorldState
+from src.simulation.models import WorldState
 from src.parser.pydantic_validation import Zone
 import heapq
 

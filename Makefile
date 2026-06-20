@@ -2,7 +2,6 @@ VENV    = venv
 PYTHON  = $(VENV)/bin/python3
 PIP     = $(VENV)/bin/pip
 SRC 	= src
-MODULE	= src.fly-in
 MAP_PATH = maps/
 
 .PHONY: install run debug clean fclean lint flake8 mypy lint-strict mypy-strict
@@ -19,12 +18,12 @@ install:
 run:
 	@MAP_PATH=$$(./map_selection.sh); \
 	if [ $$? -eq 0 ]; then \
-		$(PYTHON) -m $(MODULE) $$MAP_PATH; \
+		$(PYTHON) -m $(SRC) $$MAP_PATH; \
 	fi
 	
 
 debug:
-	$(PYTHON) -m pdb $(MODULE)
+	$(PYTHON) -m pdb $(SRC)
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

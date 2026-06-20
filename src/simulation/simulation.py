@@ -1,5 +1,5 @@
 from src.render.render import Render
-from src.models import WorldState, SimulationState
+from src.simulation.models import WorldState, SimulationState
 from src.parser.pydantic_validation import Zone
 from src.algorithm.algorithm import Algorithm
 

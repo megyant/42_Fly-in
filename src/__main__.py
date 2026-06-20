@@ -1,6 +1,6 @@
 import sys
 from pydantic import ValidationError
-from src.manager import Manager
+from src.simulation.manager import Manager
 
 """
 Next:
@@ -14,7 +14,7 @@ def main() -> None:
     try:
         if (len(sys.argv) != 2):
             print("Error: Enter filepath.\n"
-                  "Usage: python3 -m src.fly-in filepath/file.txt")
+                  "Usage: python3 -m src filepath/file.txt")
             sys.exit(1)
 
         args = sys.argv[1]

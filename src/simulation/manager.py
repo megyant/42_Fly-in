@@ -1,6 +1,6 @@
 from src.parser.pydantic_validation import ValidationParser
-from src.models import WorldState
-from src.render.simulation import SimulationStatus
+from src.simulation.models import WorldState
+from src.simulation.simulation import SimulationStatus
 from src.render.render import Render
 from src.algorithm.algorithm import Algorithm
 
