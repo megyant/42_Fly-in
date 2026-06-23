@@ -12,9 +12,6 @@ class DroneMovement:
     def update(self, target: pygame.Vector2) -> None:
         self.pos = self.pos.lerp(target, self.speed)
 
-    def reached(self, target: pygame.Vector2) -> bool:
-        return self.pos.distance_to(target) < 0.5
-
 
 class Render:
     def __init__(self, world: WorldState) -> None:
