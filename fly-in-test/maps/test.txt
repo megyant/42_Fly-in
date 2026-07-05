@@ -1,0 +1,16 @@
+# Easy Level 1: Simple linear path
+nb_drones: 5
+
+start_hub: start 0 0 [color=olive]
+hub: waypoint1 1 0 [color=blue]
+hub: waypoint2 2 0 [color=blue]
+end_hub: end 3 0 [color=red zone=restricted]
+
+connection: start-waypoint1
+connection: waypoint1-waypoint2
+connection: waypoint2-end
+
+
+
+# Erro 1: Apanha primeiro a conexão n existir em vez de o start hub ou end hub não existirem
+# Erro 2(?): nb of drones 0 ele computa - pôr erro? - 0 é positivo?
