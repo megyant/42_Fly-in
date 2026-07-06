@@ -1,4 +1,4 @@
-VENV    = venv
+VENV    = .venv
 PYTHON  = $(VENV)/bin/python3
 PIP     = $(VENV)/bin/pip
 SRC 	= src
@@ -17,10 +17,7 @@ install:
 
 run:
 	@MAP_PATH=$$(./map_selection.sh); \
-	if [ $$? -eq 0 ]; then \
-		$(PYTHON) -m $(SRC) $$MAP_PATH; \
-	fi
-	
+	[ -n "$$MAP_PATH" ] && $(PYTHON) -m $(SRC) "$$MAP_PATH" || true
 
 debug:
 	$(PYTHON) -m pdb $(SRC)

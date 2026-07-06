@@ -2,17 +2,6 @@ import os
 import re
 from typing import Dict, List, Any
 
-""" nb_drones: 2
-
-start_hub: start 0 0 [color=green]
-hub: waypoint1 1 0 [color=blue]
-hub: waypoint2 2 0 [color=blue]
-end_hub: goal 3 0 [color=red]
-
-connection: start-waypoint1
-connection: waypoint1-waypoint2
-connection: waypoint2-goal """
-
 
 class Parser:
     def __init__(self) -> None:
@@ -32,8 +21,7 @@ class Parser:
         self.end_hub: Dict[str, Any] = {}
         self.connections: List[Dict[str, Any]] = []
         self.line_number: int = 0
-        self.connections = []
-        self.seen_connections: set = set()
+        self.seen_connections: set[str] = set()
 
     def parse_file(self, filepath: str) -> None:
         """
@@ -54,8 +42,8 @@ class Parser:
             # open the file and copy the lines to the list
             with open(filepath, 'r') as f:
                 lines = f.readlines()
-        except IOError:
-            print("Error: Could not read file.")
+        except IOError as e:
+            raise IOError(f"Error: Could not read file - {e}")
 
         for self.line_number, line in enumerate(lines, start=1):
             # clean lines from leading and trailing spaces and ignore comments
@@ -143,30 +131,44 @@ class Parser:
 
                     name = parts[0]
 
-                    # check if there is already a hub with the same name
-                    if any(h['name'] == name for h in self.hubs):
-                        raise ValueError("Duplicate hub: "
-                                         f"{name}."
-                                         f"Line: {self.line_number}")
-
-                    meta_match = re.search(r'\[([^\]]*)\]', line)
-                    metadata = (meta_match.group(1).split()
-                                if meta_match else None)
-
-                    hub = {
-                        "name": parts[0],
-                        "x": int(parts[1]),
-                        "y": int(parts[2]),
-                        "metadata": metadata,
-                        "line": self.line_number
-                    }
-                    self.hubs.append(hub)
+                    x = int(parts[1])
+                    y = int(parts[2])
                 except (ValueError, IndexError) as e:
-                    raise ValueError("Could not compute 'hub' - "
-                                     f"{e}.")
+                    raise ValueError(f"Could not compute 'hub' - {e}.\n"
+                                     f"Line: {self.line_number}")
+
+                # check if there is already a hub with the same name
+                full_hubs = list(self.hubs)
+                if self.start_hub:
+                    full_hubs.append(self.start_hub)
+                if self.end_hub:
+                    full_hubs.append(self.end_hub)
+                if any(h['name'] == name for h in full_hubs):
+                    raise ValueError("Duplicate hub: "
+                                     f"{name}.\n"
+                                     f"Line: {self.line_number}")
+
+                meta_match = re.search(r'\[([^\]]*)\]', info)
+                metadata = (meta_match.group(1).split()
+                            if meta_match else None)
+
+                hub = {
+                    "name": parts[0],
+                    "x": x,
+                    "y": y,
+                    "metadata": metadata,
+                    "line": self.line_number
+                }
+                self.hubs.append(hub)
 
             # parse connections
             elif line.startswith('connection'):
+                if not self.start_hub:
+                    raise ValueError("'start_hub' is missing\n"
+                                     f"Line: {self.line_number}")
+                if not self.end_hub:
+                    raise ValueError("'end_hub' is missing\n"
+                                     f"Line: {self.line_number}")
                 try:
                     info = line.split(':')[1]. strip()
                     parts = info.split()
@@ -216,7 +218,8 @@ class Parser:
                     self.connections.append(
                         {
                             "connection": connect,
-                            "metadata": metadata
+                            "metadata": metadata,
+                            "line": self.line_number
                         }
                     )
                 except (ValueError, IndexError) as e:

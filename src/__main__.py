@@ -2,13 +2,6 @@ import sys
 from pydantic import ValidationError
 from src.simulation.manager import Manager
 
-"""
-Next:
-
-- Start working on the graphs
-- Start working on the algorithm
-"""
-
 
 def main() -> None:
     try:
@@ -23,7 +16,8 @@ def main() -> None:
 
         manager.start_simulation()
 
-    except (ValueError, FileNotFoundError, ValidationError) as e:
+    except (ValueError, FileNotFoundError, ValidationError,
+            IOError) as e:
         print(f"Error: {e}")
         sys.exit(1)
 

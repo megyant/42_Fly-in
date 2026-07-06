@@ -5,12 +5,15 @@ import sys
 
 
 class DroneMovement:
-    def __init__(self, pos: tuple) -> None:
+    def __init__(self, pos: tuple[float, float]) -> None:
         self.pos = pygame.Vector2(pos)
         self.speed = 0.08
 
     def update(self, target: pygame.Vector2) -> None:
         self.pos = self.pos.lerp(target, self.speed)
+
+    def reached(self, target: pygame.Vector2) -> bool:
+        return self.pos.distance_to(target) < 0.5
 
 
 class Render:

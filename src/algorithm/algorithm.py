@@ -68,8 +68,8 @@ class Algorithm:
                     self.parents[neigbour] = node
                     heap.append((new_cost, neigbour))
 
-    def reconstruct_path(self) -> list:
-        self.final_path = []
+    def reconstruct_path(self) -> list[str]:
+        self.final_path: list[str] = []
         current = self.world.end
         while current != self.world.start:
             self.final_path.append(current)
