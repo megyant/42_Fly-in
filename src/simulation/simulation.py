@@ -200,6 +200,7 @@ class SimulationStatus:
         # reset connection usage except in_transit
         self.state.connection_occupancy = {key: 0
                                            for key in self.world.connections}
+
         for drone, (origin, destination) in self.state.in_transit.items():
             if f"{origin}-{destination}" in self.world.connections:
                 transit_key = f"{origin}-{destination}"
