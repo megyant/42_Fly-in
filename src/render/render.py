@@ -5,19 +5,77 @@ import sys
 
 
 class DroneMovement:
+    """
+    Handles the smooth linear interpolation and positioning transitions
+    for a drone.
+    """
     def __init__(self, pos: tuple[float, float]) -> None:
+        """
+        Initialize the DroneMovement class.
+
+        Args:
+            pos: Starting 2D coordinate for the drone.
+            speed: The interpolation rate (LERP factor) controlling movement
+            speed.
+        """
         self.pos = pygame.Vector2(pos)
         self.speed = 0.08
 
     def update(self, target: pygame.Vector2) -> None:
+        """
+        Linearly interpolate the drone's position closer to its target vector.
+
+        Args:
+            target: The destination 2D vector coordinate.
+        """
         self.pos = self.pos.lerp(target, self.speed)
 
     def reached(self, target: pygame.Vector2) -> bool:
+        """
+        Determine if the drone is within an acceptable threshold distance of
+        its target.
+
+        Args:
+            target: The destination 2D vector coordinate to check against.
+
+        Returns:
+            True if the distance is less than 0.5 units, otherwise False.
+        """
         return self.pos.distance_to(target) < 0.5
 
 
 class Render:
+    """
+    Manages the Pygame simulation display window, graphical assets, layout
+    scales, and rendering pipelines for the map elements and drones.
+    """
     def __init__(self, world: WorldState) -> None:
+        """
+        Initialize the Render class.
+
+        Args:
+            world: Current configuration state containing static environment
+            details.
+            width: Width of the application window in pixels.
+            heigth: Height of the application window in pixels.
+            screen: Pygame surface representative of the active canvas window.
+            clock: Pygame framing tracker to lock execution updates to a set
+            tick rate.
+            positions: Mapping dictionary linking node identifiers to mapped
+            screen coordinates.
+            color_map: Palette database associating text keywords with pure
+            RGB tuples.
+            rainbow_colors: Sequential list of color keywords used to generate
+            multi-ring nodes.
+            zone_color: Status lookup table mapping operational hazard tiers
+            to color tokens.
+            drone_img: Base raw pixel texture asset loaded for a drone
+            instance.
+            drone_sprite: Scaled and adjusted active runtime image variant of
+            the drone asset.
+            drone_movement: Mapping associating unique drone keys with active
+            movement controller instances.
+        """
         pygame.init()
 
         self.width = 1280
@@ -81,6 +139,16 @@ class Render:
 
     def compute_layout(self) -> Tuple[Dict[str, Tuple[float, float]],
                                       float, float]:
+        """
+        Calculate mathematical scaling variables, coordinate normalization
+        maps, and drawing offsets to fit node points properly inside the
+        responsive screen dimensions.
+
+        Returns:
+            A tuple containing a dictionary of positions, the unified
+            rendering scale factor, and the calculated radius value for
+            individual nodes.
+        """
         hubs = self.world.hubs.values()
         if not hubs:
             return {}, 1.0, 1.0
@@ -135,6 +203,10 @@ class Render:
         return positions, scale, node_radius
 
     def load_world(self) -> None:
+        """
+        Refresh layout variables and seed structural trackers for drone motion
+        positions relative to the initial hub origin.
+        """
         layout = self.compute_layout()
         self.positions, self.scale, self.node_radius = layout
         start_pos = self.positions[self.world.start]
@@ -142,6 +214,19 @@ class Render:
             self.drone_movement[f"D{i}"] = DroneMovement(start_pos)
 
     def draw(self, simulation: SimulationState) -> bool:
+        """
+        Direct the entire layout drawing routine frame by frame, update
+        individual display elements, and regulate execution velocity
+        constraints.
+
+        Args:
+            simulation: Active instance tracking state configurations for the
+            current simulation frame.
+
+        Returns:
+            A boolean tracking if all active drones have completed motion
+            routines to targets.
+        """
         self._handle_events()
 
         self.simulation = simulation
@@ -160,6 +245,10 @@ class Render:
         return all_arrived
 
     def _handle_events(self) -> None:
+        """
+        Listen for and handle underlying display hooks, exit commands, and
+        interface resizing tasks.
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -182,6 +271,10 @@ class Render:
                     sys.exit()
 
     def _draw_connections(self) -> None:
+        """
+        Draw structural link paths between paired coordinates onto the window
+        surface and map midpoint matrices.
+        """
         self.center = {}
         for key, connection in self.world.connections.items():
             pygame.draw.line(surface=self.screen,
@@ -195,6 +288,10 @@ class Render:
                                 (start[1] + end[1]) / 2)
 
     def _draw_zones(self) -> None:
+        """
+        Draw colored outer radial rings centered around node coordinates
+        indicating hazard zone definitions.
+        """
         for hub in self.world.hubs.values():
             if hub.processed_meta is None:
                 continue
@@ -214,6 +311,10 @@ class Render:
                                radius=self.node_radius * 1.2)
 
     def _draw_hubs(self) -> None:
+        """
+        Draw core circular elements for each hub, evaluating for specialized
+        color instructions or rainbow patterns.
+        """
         for hub in self.world.hubs.values():
             if hub.processed_meta is None:
                 continue
@@ -241,6 +342,10 @@ class Render:
                                        radius=max(1, int(new_radius)))
 
     def _draw_labels(self) -> None:
+        """
+        Generate and stamp dynamic textual identifiers below core hub
+        locations.
+        """
         self.font = pygame.font.SysFont("Arial", round(self.scale * 0.11),
                                         bold=True)
         for name in self.world.hubs:
@@ -259,6 +364,10 @@ class Render:
             self.screen.blit(text_surface, (render_x, render_y))
 
     def _draw_zone_legend(self) -> None:
+        """
+        Render a structured color legend on the bottom left corner detailing
+        the hazard classifications.
+        """
         font_size = 14
 
         self.zone_font = pygame.font.SysFont("Arial", font_size,
@@ -295,6 +404,10 @@ class Render:
                                radius=5)
 
     def _draw_turns(self) -> None:
+        """
+        Display the active runtime turn index count on the upper left screen
+        bounds.
+        """
         text = f"Turns: {self.simulation.turn}"
 
         font_size = 20
@@ -308,6 +421,18 @@ class Render:
         self.screen.blit(text_surface, (20, 10))
 
     def _draw_drones(self, simulation: SimulationState) -> bool:
+        """
+        Calculate real-time positions for all deployed simulation drones,
+        advance linear interpolation offsets, and blit sprite imagery onto
+        destinations.
+
+        Args:
+            simulation: Current simulation status configuration.
+
+        Returns:
+            True if all active drones have successfully arrived at their
+            immediate destination markers, otherwise False.
+        """
         sprite_w = self.drone_sprite.get_width()
         sprite_h = self.drone_sprite.get_height()
         all_arrived = True

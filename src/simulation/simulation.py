@@ -5,9 +5,31 @@ from src.algorithm.algorithm import Algorithm
 
 
 class SimulationStatus:
+    """
+    Manages the step-by-step turn execution logic, constraints,
+    and transient occupancy states of the active simulation loop.
+    """
     def __init__(self, world: WorldState,
                  renderer: Render,
                  algorithm: Algorithm) -> None:
+        """
+        Initialize the SimulationStatus class.
+
+        Args:
+            world: Current configuration state containing static environment
+            details.
+            renderer: Visual interface pipeline handler for frame presentation.
+            algorithm: Evaluated routing agent populated with optimal path
+            vectors.
+            path_index: Lookup dictionary mapping path hub names to their
+            positional sequence indices.
+            hub_max: Threshold dictionary tracking maximum drone capacity
+            allowed per hub.
+            conn_max: Threshold dictionary tracking maximum simultaneous drone
+            capacity per link connection.
+            state: Tracking state monitoring dynamic updates for the current
+            frame iteration.
+        """
         self.world = world
         self.renderer = renderer
         self.algorithm = algorithm
@@ -30,6 +52,10 @@ class SimulationStatus:
         )
 
     def run(self) -> None:
+        """
+        Execute the simulation loop sequentially until target resolution is
+        reached, then pass step records directly to the visual renderer.
+        """
         steps = []
         print("\n=== Starting Simulation ===")
         print(f"\nNumber of drones: {self.world.nb_drones}\n")
@@ -67,10 +93,22 @@ class SimulationStatus:
             self.renderer.draw(self.state)
 
     def finished(self) -> bool:
+        """
+        Verify if all deployed drone entities have arrived at the target
+        ending destination.
+
+        Returns:
+            True if all drone positions equal the end hub name, otherwise
+            False.
+        """
         return all(pos == self.world.end
                    for pos in self.state.drone_positions.values())
 
     def step(self) -> None:
+        """
+        Process a single discrete operational snapshot cycle, managing transit
+        delay logic, occupancy capacities, and route progression updates.
+        """
         self.planned_moves = {}
         self.resolved_transits = {}
         tentative_occupancy = self.state.hub_occupancy.copy()

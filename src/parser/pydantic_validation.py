@@ -5,7 +5,9 @@ from enum import Enum
 
 
 class Zone(str, Enum):
-    """ Lists all available options for [zone=]. """
+    """
+    Lists all available options for [zone=].
+    """
     normal = 'normal'
     blocked = 'blocked'
     restricted = 'restricted'
@@ -13,14 +15,18 @@ class Zone(str, Enum):
 
 
 class MetaModelDrones(BaseModel):
-    """ Class that stores all metadata for hubs. """
+    """
+    Class that stores all metadata for hubs.
+    """
     zone: Optional[Zone] = Zone.normal
     color: Optional[str] = None
     max_drones: Optional[int] = Field(default=1, ge=1)
 
 
 class HubModel(BaseModel):
-    """ Class that stores all parameters from hubs. """
+    """
+    Class that stores all parameters from hubs.
+    """
     name: Any
     x: int
     y: int
@@ -29,6 +35,12 @@ class HubModel(BaseModel):
 
     @model_validator(mode='after')
     def validate_hub_name(self) -> 'HubModel':
+        """
+        Validates if there is no '-' in hub name
+
+        Returns:
+            The validated self instance.
+        """
         if ' ' in self.name or '-' in self.name:
             raise ValueError(f"Invalid hub name: '{self.name}'. "
                              "Spaces and dashes are forbidden")
@@ -39,6 +51,9 @@ class HubModel(BaseModel):
         """
         Validates if metadata is is apropriate format and
         stores it in its own Base Model - MetaModelDrones().
+
+        Returns:
+            The self instance containing the processed metadata schema.
         """
         if self.metadata is None:
             self.processed_meta = MetaModelDrones()
@@ -66,12 +81,16 @@ class HubModel(BaseModel):
 
 
 class MetaModelConnect(BaseModel):
-    """ Class that stores all metadata for connections. """
+    """
+    Class that stores all metadata for connections.
+    """
     max_link_capacity: Optional[int] = Field(default=1, ge=1)
 
 
 class ConnectionModel(BaseModel):
-    """ Class that stores all parameters from connections. """
+    """
+    Class that stores all parameters from connections.
+    """
     start: str
     end: str
     metadata: Optional[List[str]] = None
@@ -82,6 +101,10 @@ class ConnectionModel(BaseModel):
         """
         Validates if metadata is is apropriate format and
         stores it in its own Base Model - MetaModelConnect().
+
+        Returns:
+            The self instance containing the processed connection
+            metadata schema.
         """
         if self.metadata is None:
             self.processed_meta = MetaModelConnect()
@@ -108,6 +131,10 @@ class ConnectionModel(BaseModel):
 
 
 class ValidationParser(Parser):
+    """
+    A concrete parser interface optimized to extract, format, and validate
+    simulation structures from external input sources.
+    """
     def __init__(self) -> None:
         """
         Initialize the ValiadionParser class.
@@ -123,7 +150,11 @@ class ValidationParser(Parser):
 
     def init_hubs(self) -> Tuple[Dict[str, HubModel], str, str]:
         """
-            Initialize and store the parsed dictionaries into a HubModel().
+        Initialize and store the parsed dictionaries into a HubModel().
+
+        Returns:
+            A tuple containing the structured dictionary of named HubModels,
+            the name of the starting hub, and the name of the ending hub.
         """
         try:
             if not self.start_hub:
@@ -179,8 +210,11 @@ class ValidationParser(Parser):
 
     def init_connections(self) -> Dict[str, ConnectionModel]:
         """
-            Initialize and store the parsed dictionaries into a
-            ConnectionModel().
+        Initialize and store the parsed dictionaries into a ConnectionModel().
+
+        Returns:
+            A dictionary mapping generated string connection tags to
+            ConnectionModel blueprints.
         """
         try:
             # store each connection into a ConnectionModel()
@@ -205,6 +239,17 @@ class ValidationParser(Parser):
     def build_neighbours(self,
                          conne: dict[str, ConnectionModel]) -> dict[str,
                                                                     list[str]]:
+        """
+        Builds a bidirectional dictionary of hubs and their accessible
+        neighbors.
+
+        Args:
+            conne: Active collection of verified ConnectionModel links.
+
+        Returns:
+            An adjacency list mapping parent hub nodes to listings of
+            neighboring target nodes.
+        """
         neighbours: dict[str, list[str]] = {}
 
         for conn in conne.values():

@@ -4,6 +4,10 @@ from typing import Dict, List, Any
 
 
 class Parser:
+    """
+    Base configuration parser responsible for raw text stream segmentation,
+    line-by-line syntax validation, and basic field extraction.
+    """
     def __init__(self) -> None:
         """
         Initialize the Parser class.
