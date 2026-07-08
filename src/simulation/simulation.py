@@ -21,8 +21,6 @@ class SimulationStatus:
             renderer: Visual interface pipeline handler for frame presentation.
             algorithm: Evaluated routing agent populated with optimal path
             vectors.
-            path_index: Lookup dictionary mapping path hub names to their
-            positional sequence indices.
             hub_max: Threshold dictionary tracking maximum drone capacity
             allowed per hub.
             conn_max: Threshold dictionary tracking maximum simultaneous drone
@@ -33,8 +31,7 @@ class SimulationStatus:
         self.world = world
         self.renderer = renderer
         self.algorithm = algorithm
-        self.path_index = {hub: i for i, hub in enumerate(
-            self.algorithm.final_path)}
+
         self.hub_max = {name: hub.processed_meta.max_drones
                         for name, hub in world.hubs.items()
                         if hub.processed_meta}
@@ -48,7 +45,9 @@ class SimulationStatus:
             hub_occupancy={name: (world.nb_drones if name == world.start
                                   else 0) for name in world.hubs},
             connection_occupancy={key: 0 for key in world.connections},
-            in_transit={}
+            in_transit={},
+            drone_paths={f"D{i}": list(self.algorithm.final_path[1:])
+                         for i in range(world.nb_drones)}
         )
 
     def run(self) -> None:
@@ -79,7 +78,9 @@ class SimulationStatus:
                 drone_positions=dict(self.state.drone_positions),
                 hub_occupancy=dict(self.state.hub_occupancy),
                 connection_occupancy=dict(self.state.connection_occupancy),
-                in_transit=dict(self.state.in_transit)
+                in_transit=dict(self.state.in_transit),
+                drone_paths=dict[str, list[str]](
+                     {k: list(v) for k, v in self.state.drone_paths.items()})
             ))
 
         print(f"\nTotal turns: {self.state.turn}")
@@ -111,6 +112,7 @@ class SimulationStatus:
         """
         self.planned_moves = {}
         self.resolved_transits = {}
+        restr_free: dict[str, int] = {}
         tentative_occupancy = self.state.hub_occupancy.copy()
 
         for drone, current_pos in self.state.drone_positions.items():
@@ -127,6 +129,9 @@ class SimulationStatus:
                 self.state.in_transit.pop(drone)
                 # mark them as handled
                 self.resolved_transits[drone] = destination
+
+                if self.state.drone_paths[drone]:
+                    self.state.drone_paths[drone].pop(0)
                 continue
 
             # drone is mid-connection, not yet resolved
@@ -134,10 +139,11 @@ class SimulationStatus:
                 continue
 
             # get current and next index
-            current_index = self.path_index[current_pos]
-            if current_index + 1 >= len(self.algorithm.final_path):
+            remaining_path = self.state.drone_paths[drone]
+            if not remaining_path:
                 continue
-            next_pos = self.algorithm.final_path[current_index + 1]
+
+            next_pos = remaining_path[0]
 
             # get the connection start-end format
             if f"{current_pos}-{next_pos}" in self.world.connections:
@@ -152,8 +158,10 @@ class SimulationStatus:
             elif next_hub_meta.zone == Zone.restricted:
                 self.state.in_transit[drone] = (current_pos, next_pos)
                 self.state.drone_positions[drone] = connection_key
-                self.state.hub_occupancy[current_pos] -= 1
+
+                restr_free[current_pos] = restr_free.get(current_pos, 0) + 1
                 tentative_occupancy[current_pos] -= 1
+
                 self.state.connection_occupancy[connection_key] += 1
                 continue
 
@@ -176,12 +184,18 @@ class SimulationStatus:
                 tentative_occupancy[current_pos] -= 1
                 self.state.connection_occupancy[connection_key] += 1
 
-        # apply planned moves
+        for hub_name, count in restr_free.items():
+            self.state.hub_occupancy[hub_name] -= count
+
+        # apply regular moves
         for drone, next_pos in self.planned_moves.items():
             current_pos = self.state.drone_positions[drone]
             self.state.drone_positions[drone] = next_pos
             self.state.hub_occupancy[current_pos] -= 1
             self.state.hub_occupancy[next_pos] += 1
+
+            if self.state.drone_paths[drone]:
+                self.state.drone_paths[drone].pop(0)
 
         # reset connection usage except in_transit
         self.state.connection_occupancy = {key: 0

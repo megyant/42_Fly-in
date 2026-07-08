@@ -43,9 +43,11 @@ class SimulationState:
         drones traveling on each connection.
         in_transit: Dictionary mapping moving drones to a tuple containing
         their source and destination hubs.
+        drone_paths: Dictionary mapping the path of each drone
     """
     turn: int
     drone_positions: dict[str, str]
     hub_occupancy: dict[str, int]
     connection_occupancy: dict[str, int]
     in_transit: dict[str, tuple[str, str]]
+    drone_paths: dict[str, list[str]]
