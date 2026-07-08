@@ -75,7 +75,7 @@ class Render:
             'priority': 'royalblue'
         }
 
-        self.drone_img = pygame.image.load('../fly-in/src/assets/drone.png')
+        self.drone_img = pygame.image.load('src/render/assets/drone.png')
         self.drone_sprite = self.drone_img
         self.drone_movement: dict[str, DroneMovement] = {}
 

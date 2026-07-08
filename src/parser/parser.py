@@ -92,9 +92,9 @@ class Parser:
                         "metadata": metadata,
                         "line": self.line_number
                     }
-                except (ValueError, IndexError) as e:
-                    raise ValueError("Could not compute 'start_hub' - "
-                                     f"{e}.\n")
+                except (ValueError, IndexError):
+                    raise ValueError("Could not compute 'start_hub'\n"
+                                     f"Line: {self.line_number}.\n")
 
             # parse end_hub
             elif line.startswith('end_hub'):

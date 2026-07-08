@@ -1,9 +1,9 @@
-	#!/bin/bash
+#!/bin/bash
 
 # Keep looping until a valid map file is selected or the user quits
 while true; do
     echo "" >&2
-    echo "==== Difficulty Selection ====" >&2
+    echo "==== Difficulty Selection ====" >&2 # sends to STERR
     echo "" >&2
     echo "1 - Easy" >&2
     echo "2 - Medium" >&2
