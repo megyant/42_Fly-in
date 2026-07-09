@@ -6,6 +6,10 @@ from typing import Any
 
 @dataclass
 class MoveRequest:
+    """
+    Data payload container capturing a drone's structural intent
+    to transition between two specific operational hubs.
+    """
     drone: str
     origin: str
     dest: str
@@ -14,11 +18,39 @@ class MoveRequest:
 
 
 class SimulationStep:
+    """
+    Encapsulates discrete sub-step turn mechanics, including structural
+    arrival parsing, resource capacity allocation, and transient state
+    mutations.
+    """
     def __init__(self, state: SimulationState, world: WorldState):
+        """
+        Initialize the SimulationStep utility controller.
+
+        Args:
+            state: Tracking container monitoring dynamic updates for the
+            current frame iteration.
+            world: Static global environment tracking definitions and network
+            boundaries.
+        """
         self.state = state
         self.world = world
 
     def key_format(self, start: str, end: str, placement: Any) -> str:
+        """
+        Derive an ordered bidirectional lookup identifier corresponding to
+        the topology mapping registry.
+
+        Args:
+            start: Name identifier of the origin node.
+            end: Name identifier of the target node.
+            placement: Registry sequence map holding active topological link
+            keys.
+
+        Returns:
+            Formatted connection string formatted as either 'start-end' or
+            'end-start'.
+        """
         if f"{start}-{end}" in placement:
             connection_key = f"{start}-{end}"
         else:
@@ -27,6 +59,14 @@ class SimulationStep:
         return connection_key
 
     def resolve_arrivals(self) -> dict[str, str]:
+        """
+        Process out-of-transit elements terminating within restricted
+        corridors, advancing their spatial presence and freeing connection
+        handles.
+
+        Returns:
+            A map of drone names to their newly confirmed hub destinations.
+        """
         resolved: dict[str, str] = {}
 
         for drone, (origin, dest) in list(self.state.in_transit.items()):
@@ -43,6 +83,17 @@ class SimulationStep:
 
     def collect_requests(self, just_arrived: dict[str, str]
                          ) -> list[MoveRequest]:
+        """
+        Evaluate eligible asset instances and aggregate transit requests
+        matching pending nodes along their path paths.
+
+        Args:
+            just_arrived: Tracking collection indexing drones that completed
+                restricted transit adjustments on the current tick.
+
+        Returns:
+            A list of structural routing requests targeting physical slots.
+        """
         requests: list[MoveRequest] = []
 
         for drone, current_pos in self.state.drone_positions.items():
@@ -83,6 +134,22 @@ class SimulationStep:
                           hub_max: dict[str, int],
                           conn_max: dict[str, int]) -> \
             list[MoveRequest]:
+        """
+        Validate intent logs sequentially using a deterministic
+        order-independent sequence, admitting movements that respect network
+        capacity headroom.
+
+        Args:
+            requests: Raw intent payloads extracted from viable active agents.
+            hub_max: Threshold dictionary tracking maximum drone capacity
+            allowed per hub.
+            conn_max: Threshold dictionary tracking maximum simultaneous
+            capacity per link connection.
+
+        Returns:
+            Filtered list of structural movement actions authorized for commit
+            phase.
+        """
         admitted: list[MoveRequest] = []
 
         ordered_requests = sorted(requests,
@@ -119,6 +186,14 @@ class SimulationStep:
         return admitted
 
     def apply_moves(self, admitted: list[MoveRequest]) -> None:
+        """
+        Commit authorized asset transitions to active simulation state fields,
+        advancing indices and resetting transactional framework vectors.
+
+        Args:
+            admitted: Authorized structural intents passed out of capacity
+            resolution filters.
+        """
         for req in admitted:
             if req.is_restricted:
                 self.state.in_transit[req.drone] = (req.origin, req.dest)

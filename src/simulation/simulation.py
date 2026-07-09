@@ -107,6 +107,11 @@ class SimulationStatus:
                    for pos in self.state.drone_positions.values())
 
     def step(self) -> None:
+        """
+        Process a single discrete operational turn cycle by coordinating
+        tracking resolution, collecting intent requests, allocating asset
+        capacities, and committing final position updates.
+        """
         self.resolved_transits = self.sim_step.resolve_arrivals()
         requests = self.sim_step.collect_requests(self.resolved_transits)
         admitted = self.sim_step.allocate_capacity(requests,
