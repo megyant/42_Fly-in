@@ -172,8 +172,7 @@ class SimulationStatus:
             connection_occup = self.state.connection_occupancy[connection_key]
 
             # is the hub free
-            hub_ok = (current_pos == self.world.start or
-                      next_pos == self.world.end or
+            hub_ok = (next_pos == self.world.end or
                       tentative_occupancy[next_pos] < max_drones_next)
 
             # if hub and connection free
