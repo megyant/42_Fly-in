@@ -49,7 +49,7 @@ class SimulationStatus:
             drone_paths={f"D{i}": list(self.algorithm.final_path[1:])
                          for i in range(world.nb_drones)}
         )
-        self.next_step = SimulationStep(self.state, self.world)
+        self.sim_step = SimulationStep(self.state, self.world)
 
     def run(self) -> None:
         """
@@ -107,13 +107,13 @@ class SimulationStatus:
                    for pos in self.state.drone_positions.values())
 
     def step(self) -> None:
-        self.resolved_transits = self.next_step.resolve_arrivals()
-        requests = self.next_step.collect_requests(self.resolved_transits)
-        admitted = self.next_step.allocate_capacity(requests,
-                                                    self.hub_max,
-                                                    self.conn_max)
+        self.resolved_transits = self.sim_step.resolve_arrivals()
+        requests = self.sim_step.collect_requests(self.resolved_transits)
+        admitted = self.sim_step.allocate_capacity(requests,
+                                                   self.hub_max,
+                                                   self.conn_max)
 
         self.planned_moves = {r.drone: r.dest for r in admitted
                               if not r.is_restricted}
 
-        self.next_step.apply_moves(admitted)
+        self.sim_step.apply_moves(admitted)
