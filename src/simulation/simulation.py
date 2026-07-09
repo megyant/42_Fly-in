@@ -1,7 +1,7 @@
 from src.render.render import Render
 from src.simulation.models import WorldState, SimulationState
-from src.parser.pydantic_validation import Zone
 from src.algorithm.algorithm import Algorithm
+from src.simulation.simulation_step import SimulationStep
 
 
 class SimulationStatus:
@@ -32,10 +32,10 @@ class SimulationStatus:
         self.renderer = renderer
         self.algorithm = algorithm
 
-        self.hub_max = {name: hub.processed_meta.max_drones
+        self.hub_max = {name: hub.processed_meta.max_drones or 1
                         for name, hub in world.hubs.items()
                         if hub.processed_meta}
-        self.conn_max = {key: conn.processed_meta.max_link_capacity
+        self.conn_max = {key: conn.processed_meta.max_link_capacity or 1
                          for key, conn in world.connections.items()
                          if conn.processed_meta}
         self.state = SimulationState(
@@ -49,6 +49,7 @@ class SimulationStatus:
             drone_paths={f"D{i}": list(self.algorithm.final_path[1:])
                          for i in range(world.nb_drones)}
         )
+        self.next_step = SimulationStep(self.state, self.world)
 
     def run(self) -> None:
         """
@@ -106,106 +107,13 @@ class SimulationStatus:
                    for pos in self.state.drone_positions.values())
 
     def step(self) -> None:
-        """
-        Process a single discrete operational snapshot cycle, managing transit
-        delay logic, occupancy capacities, and route progression updates.
-        """
-        self.planned_moves = {}
-        self.resolved_transits = {}
-        restr_free: dict[str, int] = {}
-        tentative_occupancy = self.state.hub_occupancy.copy()
+        self.resolved_transits = self.next_step.resolve_arrivals()
+        requests = self.next_step.collect_requests(self.resolved_transits)
+        admitted = self.next_step.allocate_capacity(requests,
+                                                    self.hub_max,
+                                                    self.conn_max)
 
-        for drone, current_pos in self.state.drone_positions.items():
-            # filter out drones that have reached end
-            if current_pos == self.world.end:
-                continue
+        self.planned_moves = {r.drone: r.dest for r in admitted
+                              if not r.is_restricted}
 
-            # solve drones that are attempting a restricted zone
-            # in_transit - {drone: (start_zone, end_zone)}
-            if drone in self.state.in_transit:
-                destination = self.state.in_transit[drone][1]
-                self.state.drone_positions[drone] = destination
-                self.state.hub_occupancy[destination] += 1
-                self.state.in_transit.pop(drone)
-                # mark them as handled
-                self.resolved_transits[drone] = destination
-
-                if self.state.drone_paths[drone]:
-                    self.state.drone_paths[drone].pop(0)
-                continue
-
-            # drone is mid-connection, not yet resolved
-            if '-' in current_pos:
-                continue
-
-            # get current and next index
-            remaining_path = self.state.drone_paths[drone]
-            if not remaining_path:
-                continue
-
-            next_pos = remaining_path[0]
-
-            # get the connection start-end format
-            if f"{current_pos}-{next_pos}" in self.world.connections:
-                connection_key = f"{current_pos}-{next_pos}"
-            else:
-                connection_key = f"{next_pos}-{current_pos}"
-
-            next_hub_meta = self.world.hubs[next_pos].processed_meta
-
-            if next_hub_meta is None:
-                continue
-            elif next_hub_meta.zone == Zone.restricted:
-                self.state.in_transit[drone] = (current_pos, next_pos)
-                self.state.drone_positions[drone] = connection_key
-
-                restr_free[current_pos] = restr_free.get(current_pos, 0) + 1
-                tentative_occupancy[current_pos] -= 1
-
-                self.state.connection_occupancy[connection_key] += 1
-                continue
-
-            max_drones_next = self.hub_max[next_pos]
-            max_link_capacity_conn = self.conn_max[connection_key]
-            if max_drones_next is None or max_link_capacity_conn is None:
-                continue
-            connection_occup = self.state.connection_occupancy[connection_key]
-
-            # is the hub free
-            hub_ok = (next_pos == self.world.end or
-                      tentative_occupancy[next_pos] < max_drones_next)
-
-            # if hub and connection free
-            if hub_ok and connection_occup < max_link_capacity_conn:
-                # plan the moves
-                self.planned_moves[drone] = next_pos
-                tentative_occupancy[next_pos] += 1
-                tentative_occupancy[current_pos] -= 1
-                self.state.connection_occupancy[connection_key] += 1
-
-        for hub_name, count in restr_free.items():
-            self.state.hub_occupancy[hub_name] -= count
-
-        # apply regular moves
-        for drone, next_pos in self.planned_moves.items():
-            current_pos = self.state.drone_positions[drone]
-            self.state.drone_positions[drone] = next_pos
-            self.state.hub_occupancy[current_pos] -= 1
-            self.state.hub_occupancy[next_pos] += 1
-
-            if self.state.drone_paths[drone]:
-                self.state.drone_paths[drone].pop(0)
-
-        # reset connection usage except in_transit
-        self.state.connection_occupancy = {key: 0
-                                           for key in self.world.connections}
-
-        for drone, (origin, destination) in self.state.in_transit.items():
-            if f"{origin}-{destination}" in self.world.connections:
-                transit_key = f"{origin}-{destination}"
-            else:
-                transit_key = f"{destination}-{origin}"
-            self.state.connection_occupancy[transit_key] += 1
-
-        # count turns
-        self.state.turn += 1
+        self.next_step.apply_moves(admitted)
